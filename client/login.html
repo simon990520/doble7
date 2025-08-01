@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Doble7</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h1>Doble7</h1>
+                    <p>Inicia sesión con tu teléfono</p>
+                </div>
+
+                <div id="phone-form" class="auth-form">
+                    <div class="form-group">
+                        <label for="phone">Número de teléfono</label>
+                        <input type="tel" id="phone" placeholder="+57 300 123 4567" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="referral-code">Código de referido (opcional)</label>
+                        <input type="text" id="referral-code" placeholder="ABCD123" maxlength="7">
+                    </div>
+                    <button type="button" id="sendOTP" class="btn btn-primary btn-full" onclick="sendOTP()">
+                        Enviar Código
+                    </button>
+                </div>
+
+                <div id="otp-form" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="otp">Código de verificación</label>
+                        <input type="text" id="otp" placeholder="123456" maxlength="6" required>
+                        <small>Ingresa el código enviado por SMS</small>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-full" onclick="verifyOTP()">
+                        Verificar
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-full" onclick="backToPhone()">
+                        Cambiar número
+                    </button>
+                </div>
+
+                <div class="auth-footer">
+                    <a href="index.html" class="link">← Volver al inicio</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 

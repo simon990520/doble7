@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Doble7</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                                <path d="M19 15L19.74 17.74L22.5 18.5L19.74 19.26L19 22L18.26 19.26L15.5 18.5L18.26 17.74L19 15Z" fill="currentColor"/>
+                                <path d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <h1>Doble7</h1>
+                            <span class="logo-subtitle">Plataforma de Inversión</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name">Usuario</span>
+                            <span class="user-phone" id="user-phone"></span>
+                        </div>
+                        <div class="user-actions">
+                            <button class="btn btn-icon" onclick="logout()" title="Cerrar Sesión">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <!-- Resumen de Inversión -->
+            <section class="investment-summary">
+                <h2>Resumen de Inversión</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Monto Invertido</h3>
+                        <p class="amount" id="current-investment">$0</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Fecha de Inversión</h3>
+                        <p id="investment-date">-</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Disponible para Retiro</h3>
+                        <p id="withdrawal-date">-</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Estado</h3>
+                        <p id="investment-status">Sin inversión activa</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Acciones -->
+            <section class="actions">
+                <h2>Acciones</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="showInvestmentModal()" id="invest-btn">
+                        Invertir $10.000
+                    </button>
+                    <button class="btn btn-secondary" onclick="withdrawInvestment()" id="withdraw-btn" disabled>
+                        Retirar Inversión
+                    </button>
+                    <button class="btn btn-success" onclick="reinvestInvestment()" id="reinvest-btn" disabled>
+                        Reinvertir
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sistema de Referidos -->
+            <section class="referral-system">
+                <h2>Sistema de Referidos</h2>
+                <div class="referral-info">
+                    <div class="referral-card">
+                        <h3>Tu Código de Referido</h3>
+                        <div class="code-container">
+                            <span class="referral-code" id="my-referral-code">-</span>
+                            <button class="btn btn-small" onclick="copyReferralCode()">Copiar</button>
+                        </div>
+                    </div>
+                    <div class="referral-card">
+                        <h3>Referidos Activos</h3>
+                        <p class="referral-count"><span id="active-referrals">0</span> / 3</p>
+                        <small>Necesitas 3 referidos activos para retirar</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Historial de Inversiones -->
+            <section class="investment-history">
+                <h2>Historial de Inversiones</h2>
+                <div class="history-container">
+                    <div id="history-list">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de Inversión -->
+    <div id="investment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nueva Inversión</h3>
+                <button class="close-btn" onclick="closeInvestmentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Monto a invertir</label>
+                    <input type="number" id="investment-amount" value="10000" min="10000" step="1000">
+                    <small>Mínimo $10.000 COP</small>
+                </div>
+                <div class="investment-info">
+                    <p><strong>Fecha de inversión:</strong> <span id="modal-investment-date"></span></p>
+                    <p><strong>Disponible para retiro:</strong> <span id="modal-withdrawal-date"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeInvestmentModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmInvestment()">Confirmar Inversión</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 

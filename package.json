@@ -1,0 +1,16 @@
+{
+  "name": "doble7-investment-platform",
+  "version": "1.0.0",
+  "description": "MVP Plataforma de Inversión con Firebase",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx http-server client -p 8080 -c-1",
+    "start": "npx http-server client -p 8080 -c-1"
+  },
+  "keywords": ["firebase", "investment", "platform", "mvp"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+} 
