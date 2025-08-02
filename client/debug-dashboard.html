@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Doble7</title>
+    <title>Debug Dashboard - Doble7</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="notification-styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -24,12 +24,17 @@
                         </div>
                         <div class="logo-text">
                             <h1>Doble7</h1>
-                            <span class="logo-subtitle">Plataforma de Inversión</span>
+                            <span class="logo-subtitle">Debug Dashboard</span>
                         </div>
                     </div>
                 </div>
                 
                 <div class="header-right">
+                    <div class="user-info">
+                        <span class="user-phone" id="user-phone">-</span>
+                        <button class="btn btn-small" onclick="logout()">Cerrar Sesión</button>
+                    </div>
+                    
                     <!-- Botón de Notificaciones -->
                     <div class="notifications-wrapper">
                         <button class="btn btn-icon notifications-btn" onclick="showNotificationsPanel()" title="Notificaciones">
@@ -37,31 +42,11 @@
                             <span class="notification-badge" id="notification-badge">0</span>
                         </button>
                     </div>
-                    
-                    <div class="user-profile">
-                        <div class="user-avatar">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
-                            </svg>
-                        </div>
-                        <div class="user-details">
-                            <span class="user-name">Usuario</span>
-                            <span class="user-phone" id="user-phone"></span>
-                        </div>
-                        <div class="user-actions">
-                            <button class="btn btn-icon" onclick="logout()" title="Cerrar Sesión">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.59L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </header>
 
         <main class="dashboard-content">
-            <!-- Resumen de Inversión -->
             <section class="investment-summary">
                 <h2>Resumen de Inversión</h2>
                 <div class="summary-cards">
@@ -81,22 +66,6 @@
                         <h3>Estado</h3>
                         <p id="investment-status">Sin inversión activa</p>
                     </div>
-                </div>
-            </section>
-
-            <!-- Acciones -->
-            <section class="actions">
-                <h2>Acciones</h2>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="showInvestmentModal()" id="invest-btn">
-                        Invertir $10.000
-                    </button>
-                    <button class="btn btn-secondary" onclick="withdrawInvestment()" id="withdraw-btn" disabled>
-                        Retirar Inversión
-                    </button>
-                    <button class="btn btn-success" onclick="reinvestInvestment()" id="reinvest-btn" disabled>
-                        Reinvertir
-                    </button>
                 </div>
             </section>
 
@@ -128,39 +97,111 @@
                     </div>
                 </div>
             </section>
-        </main>
-    </div>
 
-    <!-- Modal de Inversión -->
-    <div id="investment-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Nueva Inversión</h3>
-                <button class="close-btn" onclick="closeInvestmentModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Monto a invertir</label>
-                    <input type="number" id="investment-amount" value="10000" min="10000" step="1000">
-                    <small>Mínimo $10.000 COP</small>
+            <!-- Debug Info -->
+            <section class="actions">
+                <h2>Información de Debug</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Estado de Firebase</h3>
+                        <p id="firebase-status">Cargando...</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Usuario Actual</h3>
+                        <p id="current-user-debug">No autenticado</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Sistema de Notificaciones</h3>
+                        <p id="notification-system-status">No inicializado</p>
+                    </div>
                 </div>
-                <div class="investment-info">
-                    <p><strong>Fecha de inversión:</strong> <span id="modal-investment-date"></span></p>
-                    <p><strong>Disponible para retiro:</strong> <span id="modal-withdrawal-date"></span></p>
+            </section>
+
+            <section class="actions">
+                <h2>Logs de Debug</h2>
+                <div id="debug-logs" style="background: #f8f9fa; padding: 20px; border-radius: 12px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <p>Los logs aparecerán aquí...</p>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeInvestmentModal()">Cancelar</button>
-                <button class="btn btn-primary" onclick="confirmInvestment()">Confirmar Inversión</button>
-            </div>
-        </div>
+            </section>
+        </main>
     </div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <!-- Scripts -->
     <script src="notifications.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Función para agregar logs
+        function addLog(message) {
+            const logsContainer = document.getElementById('debug-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('p');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Función para actualizar estado de debug
+        function updateDebugStatus() {
+            const firebaseStatus = document.getElementById('firebase-status');
+            const currentUserDebug = document.getElementById('current-user-debug');
+            const notificationSystemStatus = document.getElementById('notification-system-status');
+            
+            // Estado de Firebase
+            if (typeof firebase !== 'undefined') {
+                firebaseStatus.textContent = 'Firebase disponible';
+                firebaseStatus.style.color = '#28a745';
+            } else {
+                firebaseStatus.textContent = 'Firebase no disponible';
+                firebaseStatus.style.color = '#dc3545';
+            }
+            
+            // Usuario actual
+            if (typeof currentUser !== 'undefined' && currentUser) {
+                currentUserDebug.textContent = currentUser.uid;
+                currentUserDebug.style.color = '#28a745';
+            } else {
+                currentUserDebug.textContent = 'No autenticado';
+                currentUserDebug.style.color = '#dc3545';
+            }
+            
+            // Sistema de notificaciones
+            if (typeof notificationSystem !== 'undefined') {
+                notificationSystemStatus.textContent = 'Inicializado';
+                notificationSystemStatus.style.color = '#28a745';
+            } else {
+                notificationSystemStatus.textContent = 'No inicializado';
+                notificationSystemStatus.style.color = '#dc3545';
+            }
+        }
+
+        // Interceptar console.log para mostrar en la página
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog('LOG: ' + args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog('ERROR: ' + args.join(' '));
+        };
+
+        // Actualizar estado cada 2 segundos
+        setInterval(updateDebugStatus, 2000);
+
+        // Mostrar logs iniciales
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Página de debug del dashboard cargada');
+            addLog('Esperando inicialización de Firebase...');
+        });
+    </script>
 </body>
 </html> 

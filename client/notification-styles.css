@@ -176,6 +176,12 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.notifications-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .notifications-header h3 {
     font-size: 1.3rem;
     font-weight: 600;
@@ -189,6 +195,7 @@
     font-size: 1.2rem;
 }
 
+.notifications-clear,
 .notifications-close {
     background: none;
     border: none;
@@ -204,11 +211,13 @@
     height: 35px;
 }
 
+.notifications-clear i,
 .notifications-close i {
     font-size: 20px;
     color: currentColor;
 }
 
+.notifications-clear:hover,
 .notifications-close:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);

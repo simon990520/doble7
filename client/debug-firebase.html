@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Firebase - Doble7</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="notification-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                                <path d="M19 15L19.74 17.74L22.5 18.5L19.74 19.26L19 22L18.26 19.26L15.5 18.5L18.26 17.74L19 15Z" fill="currentColor"/>
+                                <path d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <h1>Doble7</h1>
+                            <span class="logo-subtitle">Debug Firebase</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="investment-summary">
+                <h2>Debug de Firebase</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Estado de Firebase</h3>
+                        <p id="firebase-status">Cargando...</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Usuario Actual</h3>
+                        <p id="current-user">No autenticado</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Pruebas de Base de Datos</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="testCreateInvestment()">
+                        Crear Inversión de Prueba
+                    </button>
+                    <button class="btn btn-secondary" onclick="testLoadInvestments()">
+                        Cargar Inversiones
+                    </button>
+                    <button class="btn btn-success" onclick="testCreateNotification()">
+                        Crear Notificación
+                    </button>
+                    <button class="btn btn-warning" onclick="testLoadNotifications()">
+                        Cargar Notificaciones
+                    </button>
+                    <button class="btn btn-info" onclick="showAllData()">
+                        Mostrar Todos los Datos
+                    </button>
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Datos de Firebase</h2>
+                <div id="firebase-data" style="background: #f8f9fa; padding: 20px; border-radius: 12px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <p>Los datos aparecerán aquí...</p>
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Logs de Debug</h2>
+                <div id="debug-logs" style="background: #f8f9fa; padding: 20px; border-radius: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <p>Los logs aparecerán aquí...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <!-- Scripts -->
+    <script src="notifications.js"></script>
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCuMO-khLd132Cz4nouEnoSB_VyhxkNpPU",
+            authDomain: "boble7-7191a.firebaseapp.com",
+            databaseURL: "https://boble7-7191a-default-rtdb.firebaseio.com",
+            projectId: "boble7-7191a",
+            storageBucket: "boble7-7191a.firebasestorage.app",
+            messagingSenderId: "844244773440",
+            appId: "1:844244773440:web:32046d1f7298675383cda5",
+            measurementId: "G-06ENVMBNDW"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+
+        // Función para agregar logs
+        function addLog(message) {
+            const logsContainer = document.getElementById('debug-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('p');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Función para mostrar datos
+        function showData(title, data) {
+            const dataContainer = document.getElementById('firebase-data');
+            const timestamp = new Date().toLocaleTimeString();
+            const dataEntry = document.createElement('div');
+            dataEntry.style.marginBottom = '20px';
+            dataEntry.style.borderBottom = '1px solid #ddd';
+            dataEntry.style.paddingBottom = '10px';
+            
+            dataEntry.innerHTML = `
+                <h4 style="color: #007bff; margin-bottom: 10px;">${title} [${timestamp}]</h4>
+                <pre style="background: white; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+            `;
+            
+            dataContainer.appendChild(dataEntry);
+            dataContainer.scrollTop = dataContainer.scrollHeight;
+        }
+
+        // Función para actualizar estado
+        function updateStatus() {
+            const firebaseStatus = document.getElementById('firebase-status');
+            const currentUserElement = document.getElementById('current-user');
+            
+            if (currentUser) {
+                firebaseStatus.textContent = 'Conectado';
+                firebaseStatus.style.color = '#28a745';
+                currentUserElement.textContent = currentUser.uid;
+            } else {
+                firebaseStatus.textContent = 'No conectado';
+                firebaseStatus.style.color = '#dc3545';
+                currentUserElement.textContent = 'No autenticado';
+            }
+        }
+
+        // Función para crear inversión de prueba
+        async function testCreateInvestment() {
+            if (!currentUser) {
+                addLog('Error: Usuario no autenticado');
+                return;
+            }
+
+            try {
+                addLog('Creando inversión de prueba...');
+                
+                const investmentData = {
+                    uid: currentUser.uid,
+                    monto: 50000,
+                    fechaInversion: new Date(),
+                    fechaDisponibleRetiro: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)),
+                    estado: 'activa',
+                    fechaCreacion: new Date()
+                };
+
+                const docRef = await db.collection('inversiones').add(investmentData);
+                addLog(`Inversión creada con ID: ${docRef.id}`);
+                showData('Inversión Creada', { id: docRef.id, ...investmentData });
+                
+            } catch (error) {
+                addLog(`Error creando inversión: ${error.message}`);
+            }
+        }
+
+        // Función para cargar inversiones
+        async function testLoadInvestments() {
+            if (!currentUser) {
+                addLog('Error: Usuario no autenticado');
+                return;
+            }
+
+            try {
+                addLog('Cargando inversiones...');
+                
+                const investmentsQuery = await db.collection('inversiones')
+                    .where('uid', '==', currentUser.uid)
+                    .get();
+
+                const investments = [];
+                investmentsQuery.forEach(doc => {
+                    investments.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                addLog(`Inversiones encontradas: ${investments.length}`);
+                showData('Inversiones Cargadas', investments);
+                
+            } catch (error) {
+                addLog(`Error cargando inversiones: ${error.message}`);
+            }
+        }
+
+        // Función para crear notificación
+        async function testCreateNotification() {
+            if (!currentUser) {
+                addLog('Error: Usuario no autenticado');
+                return;
+            }
+
+            try {
+                addLog('Creando notificación de prueba...');
+                
+                const notificationData = {
+                    uid: currentUser.uid,
+                    type: 'success',
+                    title: 'Test Notificación',
+                    message: 'Esta es una notificación de prueba',
+                    time: new Date(),
+                    persistent: true,
+                    fechaCreacion: new Date()
+                };
+
+                const docRef = await db.collection('notificaciones').add(notificationData);
+                addLog(`Notificación creada con ID: ${docRef.id}`);
+                showData('Notificación Creada', { id: docRef.id, ...notificationData });
+                
+            } catch (error) {
+                addLog(`Error creando notificación: ${error.message}`);
+            }
+        }
+
+        // Función para cargar notificaciones
+        async function testLoadNotifications() {
+            if (!currentUser) {
+                addLog('Error: Usuario no autenticado');
+                return;
+            }
+
+            try {
+                addLog('Cargando notificaciones...');
+                
+                const notificationsQuery = await db.collection('notificaciones')
+                    .where('uid', '==', currentUser.uid)
+                    .orderBy('fechaCreacion', 'desc')
+                    .get();
+
+                const notifications = [];
+                notificationsQuery.forEach(doc => {
+                    notifications.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                addLog(`Notificaciones encontradas: ${notifications.length}`);
+                showData('Notificaciones Cargadas', notifications);
+                
+            } catch (error) {
+                addLog(`Error cargando notificaciones: ${error.message}`);
+            }
+        }
+
+        // Función para mostrar todos los datos
+        async function showAllData() {
+            if (!currentUser) {
+                addLog('Error: Usuario no autenticado');
+                return;
+            }
+
+            try {
+                addLog('Cargando todos los datos...');
+                
+                // Cargar usuario
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                if (userDoc.exists) {
+                    showData('Datos de Usuario', { id: userDoc.id, ...userDoc.data() });
+                }
+
+                // Cargar inversiones
+                const investmentsQuery = await db.collection('inversiones')
+                    .where('uid', '==', currentUser.uid)
+                    .get();
+
+                const investments = [];
+                investmentsQuery.forEach(doc => {
+                    investments.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                showData('Todas las Inversiones', investments);
+
+                // Cargar notificaciones
+                const notificationsQuery = await db.collection('notificaciones')
+                    .where('uid', '==', currentUser.uid)
+                    .get();
+
+                const notifications = [];
+                notificationsQuery.forEach(doc => {
+                    notifications.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                showData('Todas las Notificaciones', notifications);
+                
+                addLog('Todos los datos cargados');
+                
+            } catch (error) {
+                addLog(`Error cargando datos: ${error.message}`);
+            }
+        }
+
+        // Escuchar cambios de autenticación
+        auth.onAuthStateChanged(function(user) {
+            currentUser = user;
+            updateStatus();
+            
+            if (user) {
+                addLog(`Usuario autenticado: ${user.uid}`);
+                notificationSystem.setFirebase(user, db);
+            } else {
+                addLog('Usuario no autenticado');
+            }
+        });
+
+        // Actualizar estado cada 2 segundos
+        setInterval(updateStatus, 2000);
+
+        // Mostrar logs iniciales
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Página de debug cargada');
+            addLog('Firebase inicializado');
+        });
+    </script>
+</body>
+</html> 

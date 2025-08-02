@@ -5,6 +5,8 @@ class NotificationSystem {
         this.container = null;
         this.panel = null;
         this.badge = null;
+        this.currentUser = null;
+        this.db = null;
         this.init();
     }
 
@@ -26,9 +28,14 @@ class NotificationSystem {
         this.panel.innerHTML = `
             <div class="notifications-header">
                 <h3><i class="fas fa-bell"></i> Notificaciones</h3>
-                <button class="notifications-close" onclick="notificationSystem.closePanel()">
-                    <i class="fas fa-times"></i>
-                </button>
+                <div class="notifications-actions">
+                    <button class="notifications-clear" onclick="notificationSystem.clearAll()" title="Limpiar todas">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="notifications-close" onclick="notificationSystem.closePanel()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
             <div class="notifications-content" id="notifications-content">
                 <div class="notifications-empty">
@@ -41,24 +48,37 @@ class NotificationSystem {
         document.body.appendChild(this.panel);
     }
 
-    showNotification(type, title, message, duration = 5000) {
+    showNotification(type, title, message, duration = 5000, persistent = false) {
         const notification = {
             id: Date.now() + Math.random(),
             type,
             title,
             message,
             time: new Date(),
-            duration
+            duration,
+            persistent: persistent
         };
 
         this.notifications.unshift(notification);
+        
+        // Mantener máximo 50 notificaciones
+        if (this.notifications.length > 50) {
+            this.notifications = this.notifications.slice(0, 50);
+        }
+        
         this.renderNotification(notification);
         this.updateBadge();
 
-        if (duration > 0) {
+        // Solo eliminar automáticamente si no es persistente y tiene duración
+        if (!persistent && duration > 0) {
             setTimeout(() => {
                 this.removeNotification(notification.id);
             }, duration);
+        }
+
+        // Guardar notificación persistente en Firebase
+        if (persistent && this.currentUser && this.db) {
+            this.saveNotificationToFirebase(notification);
         }
 
         return notification.id;
@@ -95,7 +115,9 @@ class NotificationSystem {
         }, 10);
     }
 
-    removeNotification(id) {
+    async removeNotification(id) {
+        console.log('Removiendo notificación con ID:', id);
+        
         const notificationElement = this.container.querySelector(`[data-id="${id}"]`);
         if (notificationElement) {
             notificationElement.style.transform = 'translateX(100%)';
@@ -109,6 +131,11 @@ class NotificationSystem {
         this.notifications = this.notifications.filter(n => n.id != id);
         this.updateBadge();
         this.updatePanel();
+        
+        // Eliminar de Firebase si es persistente
+        if (this.currentUser && this.db) {
+            await this.removeNotificationFromFirebase(id);
+        }
     }
 
     getNotificationIconClass(type) {
@@ -165,6 +192,8 @@ class NotificationSystem {
     updatePanel() {
         const content = this.panel.querySelector('#notifications-content');
         
+        console.log('Actualizando panel de notificaciones. Total:', this.notifications.length);
+        
         if (this.notifications.length === 0) {
             content.innerHTML = `
                 <div class="notifications-empty">
@@ -187,6 +216,8 @@ class NotificationSystem {
                 </div>
             `).join('');
         }
+        
+        console.log('Panel actualizado con', this.notifications.length, 'notificaciones');
     }
 
     clearAll() {
@@ -194,6 +225,167 @@ class NotificationSystem {
         this.container.innerHTML = '';
         this.updateBadge();
         this.updatePanel();
+        
+        // Limpiar notificaciones de Firebase
+        if (this.currentUser && this.db) {
+            this.clearNotificationsFromFirebase();
+        }
+    }
+
+    // Métodos para Firebase
+    setFirebase(user, firestore) {
+        this.currentUser = user;
+        this.db = firestore;
+        
+        // Cargar notificaciones guardadas cuando se configure Firebase
+        if (user && firestore) {
+            this.loadSavedNotifications();
+        }
+    }
+
+    async saveNotificationToFirebase(notification) {
+        try {
+            console.log('Guardando notificación en Firebase:', notification);
+            
+            const notificationData = {
+                uid: this.currentUser.uid,
+                type: notification.type,
+                title: notification.title,
+                message: notification.message,
+                time: notification.time,
+                persistent: notification.persistent,
+                fechaCreacion: new Date()
+            };
+            
+            console.log('Datos a guardar:', notificationData);
+            
+            const docRef = await this.db.collection('notificaciones').add(notificationData);
+            console.log('Notificación guardada con ID:', docRef.id);
+            
+            // Actualizar el ID de la notificación con el ID de Firebase
+            notification.id = docRef.id;
+            console.log('ID de notificación actualizado:', notification.id);
+            
+        } catch (error) {
+            console.error('Error guardando notificación en Firebase:', error);
+        }
+    }
+
+    async loadSavedNotifications() {
+        if (!this.currentUser || !this.db) {
+            console.log('Firebase no configurado para notificaciones');
+            return;
+        }
+        
+        try {
+            console.log('Cargando notificaciones de Firebase para usuario:', this.currentUser.uid);
+            
+            // Primero obtener todas las notificaciones sin ordenar
+            const notificationsQuery = await this.db.collection('notificaciones')
+                .where('uid', '==', this.currentUser.uid)
+                .limit(50)
+                .get();
+            
+            console.log('Notificaciones encontradas:', notificationsQuery.size);
+            
+            this.notifications = [];
+            
+            // Convertir a array y ordenar localmente
+            const notificationsArray = [];
+            notificationsQuery.forEach(doc => {
+                const data = doc.data();
+                notificationsArray.push({
+                    id: doc.id,
+                    data: data
+                });
+            });
+            
+            // Ordenar por fecha de creación (más reciente primero)
+            notificationsArray.sort((a, b) => {
+                const dateA = a.data.fechaCreacion ? a.data.fechaCreacion.toDate() : new Date(0);
+                const dateB = b.data.fechaCreacion ? b.data.fechaCreacion.toDate() : new Date(0);
+                return dateB - dateA;
+            });
+            
+            // Procesar las notificaciones ordenadas
+            notificationsArray.forEach(item => {
+                const data = item.data;
+                console.log('Datos de notificación:', data);
+                
+                // Manejar diferentes formatos de fecha
+                let notificationTime;
+                if (data.time && data.time.toDate) {
+                    notificationTime = data.time.toDate();
+                } else if (data.time && data.time instanceof Date) {
+                    notificationTime = data.time;
+                } else if (data.fechaCreacion && data.fechaCreacion.toDate) {
+                    notificationTime = data.fechaCreacion.toDate();
+                } else if (data.fechaCreacion && data.fechaCreacion instanceof Date) {
+                    notificationTime = data.fechaCreacion;
+                } else {
+                    notificationTime = new Date();
+                }
+                
+                const notification = {
+                    id: item.id,
+                    type: data.type || 'info',
+                    title: data.title || 'Notificación',
+                    message: data.message || '',
+                    time: notificationTime,
+                    persistent: data.persistent || false
+                };
+                
+                console.log('Notificación procesada:', notification);
+                this.notifications.push(notification);
+            });
+            
+            console.log('Notificaciones cargadas en memoria:', this.notifications.length);
+            
+            this.updateBadge();
+            this.updatePanel();
+            
+            // Forzar actualización del panel si está abierto
+            if (this.panel && this.panel.classList.contains('open')) {
+                this.updatePanel();
+            }
+            
+        } catch (error) {
+            console.error('Error cargando notificaciones de Firebase:', error);
+        }
+    }
+
+    async clearNotificationsFromFirebase() {
+        try {
+            const notificationsQuery = await this.db.collection('notificaciones')
+                .where('uid', '==', this.currentUser.uid)
+                .get();
+            
+            const batch = this.db.batch();
+            notificationsQuery.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            await batch.commit();
+        } catch (error) {
+            console.error('Error limpiando notificaciones de Firebase:', error);
+        }
+    }
+
+    async removeNotificationFromFirebase(id) {
+        try {
+            console.log('Intentando eliminar notificación con ID:', id);
+            
+            // Verificar que el ID sea válido
+            if (!id || typeof id !== 'string' || id.length === 0) {
+                console.warn('ID de notificación inválido:', id);
+                return;
+            }
+            
+            await this.db.collection('notificaciones').doc(id).delete();
+            console.log('Notificación eliminada de Firebase:', id);
+        } catch (error) {
+            console.error('Error eliminando notificación de Firebase:', error);
+        }
     }
 }
 
@@ -336,8 +528,8 @@ const notificationSystem = new NotificationSystem();
 const alertSystem = new AlertSystem();
 
 // Global functions for easy access
-function showNotification(type, title, message, duration) {
-    return notificationSystem.showNotification(type, title, message, duration);
+function showNotification(type, title, message, duration, persistent = false) {
+    return notificationSystem.showNotification(type, title, message, duration, persistent);
 }
 
 function showAlert(type, title, message, options) {
@@ -350,6 +542,8 @@ function showNotificationsPanel() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando sistema de notificaciones');
+    
     // Show welcome notification if on dashboard
     if (window.location.pathname.includes('dashboard.html')) {
         setTimeout(() => {

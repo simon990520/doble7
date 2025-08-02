@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Notificaciones - Doble7</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="notification-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                                <path d="M19 15L19.74 17.74L22.5 18.5L19.74 19.26L19 22L18.26 19.26L15.5 18.5L18.26 17.74L19 15Z" fill="currentColor"/>
+                                <path d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <h1>Doble7</h1>
+                            <span class="logo-subtitle">Debug Notificaciones</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <!-- Botón de Notificaciones -->
+                    <div class="notifications-wrapper">
+                        <button class="btn btn-icon notifications-btn" onclick="showNotificationsPanel()" title="Notificaciones">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notification-badge">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard-content">
+            <section class="investment-summary">
+                <h2>Debug del Sistema de Notificaciones</h2>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <h3>Estado del Sistema</h3>
+                        <p id="system-status">Cargando...</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Notificaciones en Memoria</h3>
+                        <p id="memory-notifications">0</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Pruebas de Debug</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="testPersistentNotification()">
+                        Crear Notificación Persistente
+                    </button>
+                    <button class="btn btn-secondary" onclick="testLoadNotifications()">
+                        Recargar Notificaciones
+                    </button>
+                    <button class="btn btn-success" onclick="testClearNotifications()">
+                        Limpiar Todas
+                    </button>
+                    <button class="btn btn-primary" onclick="showDebugInfo()">
+                        Mostrar Info Debug
+                    </button>
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Logs de Debug</h2>
+                <div id="debug-logs" style="background: #f8f9fa; padding: 20px; border-radius: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                    <p>Los logs aparecerán aquí...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="notifications.js"></script>
+    <script>
+        // Función para agregar logs
+        function addLog(message) {
+            const logsContainer = document.getElementById('debug-logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('p');
+            logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Función para actualizar estado del sistema
+        function updateSystemStatus() {
+            const statusElement = document.getElementById('system-status');
+            const memoryElement = document.getElementById('memory-notifications');
+            
+            if (notificationSystem.currentUser && notificationSystem.db) {
+                statusElement.textContent = 'Firebase Configurado';
+                statusElement.style.color = '#28a745';
+            } else {
+                statusElement.textContent = 'Firebase No Configurado';
+                statusElement.style.color = '#dc3545';
+            }
+            
+            memoryElement.textContent = notificationSystem.notifications.length;
+        }
+
+        function testPersistentNotification() {
+            addLog('Creando notificación persistente...');
+            showNotification('success', 'Test Persistente', 'Esta notificación se guardará en Firebase', 5000, true);
+            updateSystemStatus();
+        }
+
+        function testLoadNotifications() {
+            addLog('Recargando notificaciones de Firebase...');
+            notificationSystem.loadSavedNotifications().then(() => {
+                addLog('Notificaciones recargadas');
+                updateSystemStatus();
+            });
+        }
+
+        function testClearNotifications() {
+            addLog('Limpiando todas las notificaciones...');
+            notificationSystem.clearAll();
+            updateSystemStatus();
+        }
+
+        function showDebugInfo() {
+            addLog('=== INFO DEBUG ===');
+            addLog(`Usuario: ${notificationSystem.currentUser ? notificationSystem.currentUser.uid : 'No configurado'}`);
+            addLog(`Firebase: ${notificationSystem.db ? 'Configurado' : 'No configurado'}`);
+            addLog(`Notificaciones en memoria: ${notificationSystem.notifications.length}`);
+            addLog(`Panel creado: ${notificationSystem.panel ? 'Sí' : 'No'}`);
+            addLog(`Container creado: ${notificationSystem.container ? 'Sí' : 'No'}`);
+            addLog('==================');
+        }
+
+        // Actualizar estado cada 2 segundos
+        setInterval(updateSystemStatus, 2000);
+
+        // Mostrar logs iniciales
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('Página cargada');
+            addLog('Sistema de notificaciones inicializado');
+            
+            // Simular configuración de Firebase después de 3 segundos
+            setTimeout(() => {
+                addLog('Simulando configuración de Firebase...');
+                // Aquí normalmente se configuraría Firebase
+                addLog('Firebase simulado configurado');
+            }, 3000);
+        });
+    </script>
+</body>
+</html> 

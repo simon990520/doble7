@@ -46,32 +46,63 @@
                 <h2>Prueba de Notificaciones</h2>
                 <div class="summary-cards">
                     <div class="summary-card">
-                        <h3>Notificaciones</h3>
-                        <p>Prueba el sistema de notificaciones</p>
+                        <h3>Notificaciones Temporales</h3>
+                        <p>Se eliminan automáticamente</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Notificaciones Persistentes</h3>
+                        <p>Se guardan en el panel</p>
                     </div>
                 </div>
             </section>
 
             <section class="actions">
-                <h2>Botones de Prueba</h2>
+                <h2>Notificaciones Temporales</h2>
                 <div class="action-buttons">
                     <button class="btn btn-primary" onclick="testSuccessNotification()">
-                        Notificación de Éxito
+                        Éxito Temporal
                     </button>
                     <button class="btn btn-secondary" onclick="testErrorNotification()">
-                        Notificación de Error
+                        Error Temporal
                     </button>
                     <button class="btn btn-success" onclick="testWarningNotification()">
-                        Notificación de Advertencia
+                        Advertencia Temporal
                     </button>
-                    <button class="btn btn-primary" onclick="testInfoNotification()">
-                        Notificación de Info
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Notificaciones Persistentes (Importantes)</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="testInvestmentNotification()">
+                        Inversión Realizada
                     </button>
-                    <button class="btn btn-secondary" onclick="testInvestmentNotification()">
-                        Notificación de Inversión
+                    <button class="btn btn-secondary" onclick="testWithdrawalNotification()">
+                        Retiro Exitoso
                     </button>
-                    <button class="btn btn-success" onclick="testAlert()">
+                    <button class="btn btn-success" onclick="testReinvestmentNotification()">
+                        Reinversión
+                    </button>
+                    <button class="btn btn-primary" onclick="testReferralNotification()">
+                        Nuevo Referido
+                    </button>
+                    <button class="btn btn-secondary" onclick="testRegistrationNotification()">
+                        Registro Exitoso
+                    </button>
+                    <button class="btn btn-success" onclick="testGoalNotification()">
+                        Meta Alcanzada
+                    </button>
+                </div>
+            </section>
+
+            <section class="actions">
+                <h2>Pruebas de Alertas</h2>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="testAlert()">
                         Probar Alert
+                    </button>
+                    <button class="btn btn-secondary" onclick="testConfirmAlert()">
+                        Confirmar Acción
                     </button>
                 </div>
             </section>
@@ -82,23 +113,39 @@
     <script src="notifications.js"></script>
     <script>
         function testSuccessNotification() {
-            showNotification('success', '¡Éxito!', 'Esta es una notificación de éxito', 5000);
+            showNotification('success', '¡Éxito!', 'Esta es una notificación temporal de éxito', 5000);
         }
 
         function testErrorNotification() {
-            showNotification('error', 'Error', 'Esta es una notificación de error', 5000);
+            showNotification('error', 'Error', 'Esta es una notificación temporal de error', 5000);
         }
 
         function testWarningNotification() {
-            showNotification('warning', 'Advertencia', 'Esta es una notificación de advertencia', 5000);
-        }
-
-        function testInfoNotification() {
-            showNotification('info', 'Información', 'Esta es una notificación de información', 5000);
+            showNotification('warning', 'Advertencia', 'Esta es una notificación temporal de advertencia', 5000);
         }
 
         function testInvestmentNotification() {
-            showNotification('investment', 'Inversión', 'Esta es una notificación de inversión', 5000);
+            showNotification('success', '¡Inversión exitosa!', 'Tu inversión ha sido realizada correctamente', 5000, true);
+        }
+
+        function testWithdrawalNotification() {
+            showNotification('success', '¡Retiro exitoso!', 'Tu inversión ha sido retirada correctamente', 5000, true);
+        }
+
+        function testReinvestmentNotification() {
+            showNotification('success', '¡Reinversión exitosa!', 'Tu reinversión ha sido realizada correctamente', 5000, true);
+        }
+
+        function testReferralNotification() {
+            showNotification('investment', '¡Nuevo referido!', 'Alguien se registró usando tu código: +573001234567', 5000, true);
+        }
+
+        function testRegistrationNotification() {
+            showNotification('success', '¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente', 5000, true);
+        }
+
+        function testGoalNotification() {
+            showNotification('success', '¡Meta alcanzada!', 'Ya tienes los 3 referidos necesarios para retirar tu inversión', 5000, true);
         }
 
         async function testAlert() {
@@ -114,10 +161,23 @@
             }
         }
 
+        async function testConfirmAlert() {
+            const result = await showAlert('question', 'Confirmar inversión', '¿Estás seguro de que quieres invertir $10.000?', {
+                confirmText: 'Sí, invertir',
+                showCancel: true
+            });
+            
+            if (result) {
+                showNotification('success', '¡Inversión confirmada!', 'Tu inversión ha sido procesada', 5000, true);
+            } else {
+                showNotification('info', 'Inversión cancelada', 'La inversión ha sido cancelada', 3000);
+            }
+        }
+
         // Mostrar notificación de bienvenida
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
-                showNotification('info', '¡Bienvenido!', 'Sistema de notificaciones cargado correctamente', 3000);
+                showNotification('info', '¡Bienvenido!', 'Sistema de notificaciones cargado correctamente. Las notificaciones persistentes se guardarán en el panel.', 5000, true);
             }, 1000);
         });
     </script>

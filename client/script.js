@@ -107,6 +107,7 @@ async function processUserLogin() {
         if (userDoc.exists) {
             // Usuario existente
             userData = userDoc.data();
+            showNotification('info', '¡Bienvenido de vuelta!', 'Has iniciado sesión correctamente', 3000, true);
         } else {
             // Nuevo usuario
             const newUserData = {
@@ -125,6 +126,14 @@ async function processUserLogin() {
             if (referralCode) {
                 await updateReferrerCount(referralCode);
             }
+        }
+        
+        // Mostrar notificación de registro exitoso
+        showNotification('success', '¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente', 5000, true);
+        
+        // Si tiene código de referido, mostrar notificación adicional
+        if (referralCode) {
+            showNotification('info', 'Código de referido aplicado', `Te registraste usando el código: ${referralCode}`, 5000, true);
         }
         
         // Redirigir al dashboard
@@ -158,6 +167,15 @@ async function updateReferrerCount(referralCode) {
             await referrerDoc.ref.update({
                 referidosActivos: firebase.firestore.FieldValue.increment(1)
             });
+            
+            // Notificar al referidor sobre el nuevo referido
+            const referrerData = referrerDoc.data();
+            const newUserData = userData;
+            
+            // Solo mostrar notificación si el referidor está en el dashboard
+            if (window.location.pathname.includes('dashboard.html') && currentUser && currentUser.uid === referrerDoc.id) {
+                showNotification('investment', '¡Nuevo referido!', `Alguien se registró usando tu código: ${newUserData.telefono}`, 5000, true);
+            }
         }
     } catch (error) {
         console.error('Error actualizando contador de referidos:', error);
@@ -181,29 +199,61 @@ function logout() {
 
 // Cargar datos del dashboard
 async function loadDashboard() {
+    console.log('=== INICIANDO CARGA DEL DASHBOARD ===');
+    
     if (!currentUser) {
+        console.log('No hay usuario autenticado, redirigiendo...');
         window.location.href = 'login.html';
         return;
     }
     
     try {
+        console.log('Cargando datos del usuario:', currentUser.uid);
+        
         // Cargar datos del usuario
         const userDoc = await db.collection('users').doc(currentUser.uid).get();
         userData = userDoc.data();
+        console.log('Datos del usuario cargados:', userData);
         
         // Mostrar información del usuario
-        document.getElementById('user-phone').textContent = userData.telefono;
-        document.getElementById('my-referral-code').textContent = userData.miCodigo;
-        document.getElementById('active-referrals').textContent = userData.referidosActivos;
+        const userPhoneElement = document.getElementById('user-phone');
+        const referralCodeElement = document.getElementById('my-referral-code');
+        const activeReferralsElement = document.getElementById('active-referrals');
+        
+        if (userPhoneElement) userPhoneElement.textContent = userData.telefono;
+        if (referralCodeElement) referralCodeElement.textContent = userData.miCodigo;
+        if (activeReferralsElement) activeReferralsElement.textContent = userData.referidosActivos;
+        
+        console.log('Información del usuario actualizada en el DOM');
+        
+        // Verificar si alcanzó los 3 referidos necesarios
+        if (userData.referidosActivos >= 3) {
+            showNotification('success', '¡Meta alcanzada!', 'Ya tienes los 3 referidos necesarios para retirar tu inversión', 5000, true);
+        }
         
         // Cargar inversión activa
+        console.log('Cargando inversión activa...');
         await loadCurrentInvestment();
+        console.log('Inversión activa cargada');
         
         // Cargar historial
+        console.log('Iniciando carga de historial de inversiones...');
         await loadInvestmentHistory();
+        console.log('Historial de inversiones cargado');
+        
+        // Cargar notificaciones guardadas
+        console.log('Cargando notificaciones guardadas...');
+        if (typeof notificationSystem !== 'undefined') {
+            await notificationSystem.loadSavedNotifications();
+            console.log('Notificaciones guardadas cargadas');
+        } else {
+            console.error('ERROR: notificationSystem no está disponible para cargar notificaciones');
+        }
         
         // Mostrar notificación de bienvenida
         showNotification('info', '¡Bienvenido!', 'Tu dashboard ha sido cargado correctamente', 3000);
+        
+        console.log('=== DASHBOARD CARGADO COMPLETAMENTE ===');
         
     } catch (error) {
         console.error('Error cargando dashboard:', error);
@@ -211,9 +261,14 @@ async function loadDashboard() {
     }
 }
 
-// Cargar inversión activa
+// Cargar inversión activa y calcular total
 async function loadCurrentInvestment() {
     try {
+        console.log('=== CARGANDO INVERSIÓN ACTIVA ===');
+        console.log('Usuario actual:', currentUser.uid);
+        
+        // Cargar inversión activa
+        console.log('Consultando inversión activa...');
         const investmentQuery = await db.collection('inversiones')
             .where('uid', '==', currentUser.uid)
             .where('estado', '==', 'activa')
@@ -221,14 +276,40 @@ async function loadCurrentInvestment() {
             .limit(1)
             .get();
         
+        console.log('Inversión activa encontrada:', !investmentQuery.empty);
+        
         if (!investmentQuery.empty) {
             currentInvestment = investmentQuery.docs[0].data();
             currentInvestment.id = investmentQuery.docs[0].id;
-            updateInvestmentDisplay();
+            console.log('Inversión activa cargada:', currentInvestment);
         } else {
             currentInvestment = null;
-            updateInvestmentDisplay();
+            console.log('No hay inversión activa');
         }
+        
+        // Calcular total de todas las inversiones
+        console.log('Calculando total de todas las inversiones...');
+        const allInvestmentsQuery = await db.collection('inversiones')
+            .where('uid', '==', currentUser.uid)
+            .get();
+        
+        console.log('Total de inversiones encontradas:', allInvestmentsQuery.size);
+        
+        let totalInvertido = 0;
+        allInvestmentsQuery.forEach(doc => {
+            const investment = doc.data();
+            console.log('Inversión:', investment);
+            totalInvertido += investment.monto;
+        });
+        
+        console.log('Total invertido calculado:', totalInvertido);
+        
+        // Guardar el total en una variable global
+        window.totalInvertido = totalInvertido;
+        
+        console.log('Actualizando display de inversión...');
+        updateInvestmentDisplay();
+        console.log('=== INVERSIÓN ACTIVA CARGADA ===');
         
     } catch (error) {
         console.error('Error cargando inversión:', error);
@@ -237,37 +318,95 @@ async function loadCurrentInvestment() {
 
 // Actualizar display de inversión
 function updateInvestmentDisplay() {
+    console.log('=== ACTUALIZANDO DISPLAY DE INVERSIÓN ===');
+    
     const investBtn = document.getElementById('invest-btn');
     const withdrawBtn = document.getElementById('withdraw-btn');
     const reinvestBtn = document.getElementById('reinvest-btn');
     
+    console.log('Elementos encontrados:', {
+        investBtn: !!investBtn,
+        withdrawBtn: !!withdrawBtn,
+        reinvestBtn: !!reinvestBtn
+    });
+    
     if (currentInvestment) {
-        // Mostrar datos de inversión activa
-        document.getElementById('current-investment').textContent = 
-            `$${currentInvestment.monto.toLocaleString()}`;
-        document.getElementById('investment-date').textContent = 
-            formatDate(currentInvestment.fechaInversion);
-        document.getElementById('withdrawal-date').textContent = 
-            formatDate(currentInvestment.fechaDisponibleRetiro);
-        document.getElementById('investment-status').textContent = 'Activa';
+        console.log('Hay inversión activa, actualizando display...');
+        
+        // Mostrar total de todas las inversiones
+        const currentInvestmentElement = document.getElementById('current-investment');
+        const investmentDateElement = document.getElementById('investment-date');
+        const withdrawalDateElement = document.getElementById('withdrawal-date');
+        const investmentStatusElement = document.getElementById('investment-status');
+        
+        if (currentInvestmentElement) {
+            currentInvestmentElement.textContent = `$${window.totalInvertido.toLocaleString()}`;
+            console.log('Total invertido actualizado:', window.totalInvertido);
+        }
+        
+        if (investmentDateElement) {
+            investmentDateElement.textContent = formatDate(currentInvestment.fechaInversion);
+            console.log('Fecha de inversión actualizada');
+        }
+        
+        if (withdrawalDateElement) {
+            withdrawalDateElement.textContent = formatDate(currentInvestment.fechaDisponibleRetiro);
+            console.log('Fecha de retiro actualizada');
+        }
+        
+        if (investmentStatusElement) {
+            investmentStatusElement.textContent = 'Activa';
+            console.log('Estado actualizado a Activa');
+        }
         
         // Verificar si puede retirar
         const canWithdraw = canUserWithdraw();
-        withdrawBtn.disabled = !canWithdraw;
-        reinvestBtn.disabled = !canWithdraw;
-        investBtn.disabled = true;
+        console.log('Puede retirar:', canWithdraw);
+        
+        if (withdrawBtn) withdrawBtn.disabled = !canWithdraw;
+        if (reinvestBtn) reinvestBtn.disabled = !canWithdraw;
+        if (investBtn) investBtn.disabled = true;
+        
+        // Notificar si la inversión está disponible para retiro
+        if (canWithdraw) {
+            showNotification('investment', '¡Inversión disponible!', 'Tu inversión ya está disponible para retiro', 5000, true);
+        } else if (currentInvestment) {
+            // Verificar si falta tiempo o referidos
+            const today = new Date();
+            const withdrawalDate = new Date(currentInvestment.fechaDisponibleRetiro);
+            const hasEnoughReferrals = userData.referidosActivos >= 3;
+            
+            if (today < withdrawalDate && !hasEnoughReferrals) {
+                showNotification('warning', 'Faltan requisitos', 'Necesitas 3 referidos y esperar 7 días para retirar', 5000, true);
+            } else if (today < withdrawalDate) {
+                showNotification('info', 'Esperando tiempo', 'Tu inversión estará disponible pronto', 5000, true);
+            } else if (!hasEnoughReferrals) {
+                showNotification('warning', 'Faltan referidos', `Necesitas ${3 - userData.referidosActivos} referidos más para retirar`, 5000, true);
+            }
+        }
         
     } else {
-        // Sin inversión activa
-        document.getElementById('current-investment').textContent = '$0';
-        document.getElementById('investment-date').textContent = '-';
-        document.getElementById('withdrawal-date').textContent = '-';
-        document.getElementById('investment-status').textContent = 'Sin inversión activa';
+        console.log('No hay inversión activa, mostrando estado vacío...');
         
-        withdrawBtn.disabled = true;
-        reinvestBtn.disabled = true;
-        investBtn.disabled = false;
+        // Sin inversión activa
+        const currentInvestmentElement = document.getElementById('current-investment');
+        const investmentDateElement = document.getElementById('investment-date');
+        const withdrawalDateElement = document.getElementById('withdrawal-date');
+        const investmentStatusElement = document.getElementById('investment-status');
+        
+        if (currentInvestmentElement) currentInvestmentElement.textContent = '$0';
+        if (investmentDateElement) investmentDateElement.textContent = '-';
+        if (withdrawalDateElement) withdrawalDateElement.textContent = '-';
+        if (investmentStatusElement) investmentStatusElement.textContent = 'Sin inversión activa';
+        
+        if (withdrawBtn) withdrawBtn.disabled = true;
+        if (reinvestBtn) reinvestBtn.disabled = true;
+        if (investBtn) investBtn.disabled = false;
+        
+        console.log('Display actualizado para estado sin inversión');
     }
+    
+    console.log('=== DISPLAY DE INVERSIÓN ACTUALIZADO ===');
 }
 
 // Verificar si el usuario puede retirar
@@ -284,19 +423,43 @@ function canUserWithdraw() {
 // Cargar historial de inversiones
 async function loadInvestmentHistory() {
     try {
+        console.log('Cargando historial de inversiones para usuario:', currentUser.uid);
+        
         const historyQuery = await db.collection('inversiones')
             .where('uid', '==', currentUser.uid)
             .orderBy('fechaInversion', 'desc')
             .get();
         
+        console.log('Inversiones encontradas en historial:', historyQuery.size);
+        
         const historyList = document.getElementById('history-list');
+        if (!historyList) {
+            console.error('Elemento history-list no encontrado en el DOM');
+            return;
+        }
+        
         historyList.innerHTML = '';
         
-        historyQuery.forEach(doc => {
-            const investment = doc.data();
-            const historyItem = createHistoryItem(investment);
-            historyList.appendChild(historyItem);
-        });
+        if (historyQuery.empty) {
+            console.log('No hay inversiones en el historial');
+            historyList.innerHTML = `
+                <div class="history-empty">
+                    <i class="fas fa-chart-line"></i>
+                    <h4>No hay historial de inversiones</h4>
+                    <p>Realiza tu primera inversión para ver el historial aquí</p>
+                </div>
+            `;
+        } else {
+            console.log('Procesando', historyQuery.size, 'inversiones');
+            historyQuery.forEach(doc => {
+                const investment = doc.data();
+                console.log('Inversión:', investment);
+                const historyItem = createHistoryItem(investment);
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        console.log('Historial de inversiones cargado correctamente');
         
     } catch (error) {
         console.error('Error cargando historial:', error);
@@ -309,17 +472,38 @@ function createHistoryItem(investment) {
     item.className = 'history-item';
     
     const statusClass = `status-${investment.estado}`;
+    const statusText = getStatusText(investment.estado);
+    
+    let additionalInfo = '';
+    if (investment.fechaRetiro) {
+        additionalInfo = `<p>Retirado: ${formatDate(investment.fechaRetiro)}</p>`;
+    } else if (investment.fechaReinversion) {
+        additionalInfo = `<p>Reinvertido: ${formatDate(investment.fechaReinversion)}</p>`;
+    }
     
     item.innerHTML = `
         <div class="history-info">
             <h4>$${investment.monto.toLocaleString()}</h4>
-            <p>Invertido: ${formatDate(investment.fechaInversion)}</p>
-            <p>Disponible: ${formatDate(investment.fechaDisponibleRetiro)}</p>
+            <p><strong>Invertido:</strong> ${formatDate(investment.fechaInversion)}</p>
+            <p><strong>Disponible:</strong> ${formatDate(investment.fechaDisponibleRetiro)}</p>
+            ${additionalInfo}
         </div>
-        <span class="history-status ${statusClass}">${investment.estado}</span>
+        <div class="history-status-container">
+            <span class="history-status ${statusClass}">${statusText}</span>
+        </div>
     `;
     
     return item;
+}
+
+// Función para obtener texto del estado
+function getStatusText(estado) {
+    const statusMap = {
+        'activa': 'Activa',
+        'retirada': 'Retirada',
+        'reinvertida': 'Reinvertida'
+    };
+    return statusMap[estado] || estado;
 }
 
 // ==================== FUNCIONES DE INVERSIÓN ====================
@@ -371,7 +555,7 @@ async function confirmInvestment() {
         await loadCurrentInvestment();
         await loadInvestmentHistory();
         
-        showNotification('success', '¡Inversión exitosa!', 'Tu inversión ha sido realizada correctamente', 5000);
+        showNotification('success', '¡Inversión exitosa!', 'Tu inversión ha sido realizada correctamente', 5000, true);
         
     } catch (error) {
         console.error('Error realizando inversión:', error);
@@ -401,7 +585,7 @@ async function withdrawInvestment() {
             await loadCurrentInvestment();
             await loadInvestmentHistory();
             
-            showNotification('success', '¡Retiro exitoso!', 'Tu inversión ha sido retirada correctamente', 5000);
+            showNotification('success', '¡Retiro exitoso!', 'Tu inversión ha sido retirada correctamente', 5000, true);
             
         } catch (error) {
             console.error('Error retirando inversión:', error);
@@ -448,7 +632,7 @@ async function reinvestInvestment() {
             await loadCurrentInvestment();
             await loadInvestmentHistory();
             
-            showNotification('success', '¡Reinversión exitosa!', 'Tu reinversión ha sido realizada correctamente', 5000);
+            showNotification('success', '¡Reinversión exitosa!', 'Tu reinversión ha sido realizada correctamente', 5000, true);
             
         } catch (error) {
             console.error('Error reinvirtiendo:', error);
@@ -461,7 +645,7 @@ async function reinvestInvestment() {
 function copyReferralCode() {
     const code = document.getElementById('my-referral-code').textContent;
     navigator.clipboard.writeText(code).then(() => {
-        showNotification('success', 'Código copiado', 'El código de referido ha sido copiado al portapapeles', 3000);
+        showNotification('success', 'Código copiado', 'El código de referido ha sido copiado al portapapeles', 3000, true);
     }).catch(() => {
         // Fallback para navegadores que no soportan clipboard API
         const textArea = document.createElement('textarea');
@@ -470,7 +654,7 @@ function copyReferralCode() {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        showNotification('success', 'Código copiado', 'El código de referido ha sido copiado al portapapeles', 3000);
+        showNotification('success', 'Código copiado', 'El código de referido ha sido copiado al portapapeles', 3000, true);
     });
 }
 
@@ -478,28 +662,61 @@ function copyReferralCode() {
 
 // Formatear fecha
 function formatDate(date) {
-    if (typeof date === 'string') {
-        date = new Date(date);
+    try {
+        // Si es un timestamp de Firestore, convertirlo a Date
+        if (date && typeof date.toDate === 'function') {
+            date = date.toDate();
+        }
+        
+        // Si es string, convertir a Date
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        
+        // Verificar que sea una fecha válida
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            console.warn('Fecha inválida:', date);
+            return 'Fecha inválida';
+        }
+        
+        return date.toLocaleDateString('es-CO', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (error) {
+        console.error('Error formateando fecha:', error, 'Fecha original:', date);
+        return 'Error de fecha';
     }
-    return date.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
 }
 
 // ==================== INICIALIZACIÓN ====================
 
 // Verificar estado de autenticación
 auth.onAuthStateChanged(async (user) => {
+    console.log('Estado de autenticación cambiado:', user ? 'Usuario autenticado' : 'Usuario no autenticado');
+    
     if (user) {
         currentUser = user;
+        console.log('Usuario actual establecido:', user.uid);
+        
+        // Configurar Firebase en el sistema de notificaciones
+        console.log('Configurando Firebase en sistema de notificaciones...');
+        if (typeof notificationSystem !== 'undefined') {
+            notificationSystem.setFirebase(user, db);
+            console.log('Firebase configurado en sistema de notificaciones');
+        } else {
+            console.error('ERROR: notificationSystem no está definido');
+        }
         
         // Si estamos en el dashboard, cargar datos
         if (window.location.pathname.includes('dashboard.html')) {
+            console.log('Cargando dashboard...');
             await loadDashboard();
+            console.log('Dashboard cargado');
         }
     } else {
+        console.log('No hay usuario autenticado');
         // Si no hay usuario autenticado y estamos en dashboard, redirigir
         if (window.location.pathname.includes('dashboard.html')) {
             window.location.href = 'login.html';
