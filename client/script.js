@@ -21,6 +21,17 @@ let currentUser = null;
 let userData = null;
 let currentInvestment = null;
 
+// Función de respaldo para notificaciones si el sistema no está disponible
+function showNotification(type, title, message, duration = 5000, persistent = false) {
+    if (typeof notificationSystem !== 'undefined' && notificationSystem.showNotification) {
+        notificationSystem.showNotification(type, title, message, duration, persistent);
+    } else {
+        // Fallback: usar alert nativo
+        console.warn('Sistema de notificaciones no disponible, usando alert:', title, message);
+        alert(`${title}: ${message}`);
+    }
+}
+
 // ==================== FUNCIONES DE AUTENTICACIÓN ====================
 
 // Enviar código OTP
