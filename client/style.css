@@ -355,6 +355,58 @@ body {
 .header-right {
     display: flex;
     align-items: center;
+    gap: 20px;
+}
+
+/* Notifications Button */
+.notifications-wrapper {
+    position: relative;
+}
+
+.notifications-btn {
+    position: relative;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    color: white;
+    padding: 12px;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+}
+
+.notifications-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.notifications-btn i {
+    font-size: 18px;
+    color: white;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
 }
 
 .user-profile {
@@ -738,6 +790,15 @@ body {
     .user-details {
         align-items: center;
     }
+    
+    .notifications-btn {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .notifications-btn i {
+        font-size: 17px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -752,5 +813,20 @@ body {
     .modal-content {
         margin: 5% auto;
         width: 95%;
+    }
+    
+    .notifications-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .notifications-btn i {
+        font-size: 16px;
+    }
+    
+    .notification-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
     }
 } 

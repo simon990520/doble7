@@ -29,7 +29,7 @@ async function sendOTP() {
     const referralCode = document.getElementById('referral-code').value;
     
     if (!phone) {
-        alert('Por favor ingresa tu número de teléfono');
+        showNotification('warning', 'Campo requerido', 'Por favor ingresa tu número de teléfono', 4000);
         return;
     }
     
@@ -55,13 +55,13 @@ async function sendOTP() {
         
         // Manejar errores específicos
         if (error.code === 'auth/captcha-check-failed') {
-            alert('Error de reCAPTCHA. Asegúrate de que el dominio esté autorizado en Firebase Console.\n\nPara desarrollo local, agrega "localhost" y "127.0.0.1" en Authentication > Settings > Authorized domains.');
+            showNotification('error', 'Error de reCAPTCHA', 'Asegúrate de que el dominio esté autorizado en Firebase Console. Para desarrollo local, agrega "localhost" y "127.0.0.1" en Authentication > Settings > Authorized domains.', 6000);
         } else if (error.code === 'auth/invalid-phone-number') {
-            alert('Número de teléfono inválido. Asegúrate de incluir el código de país (+57 para Colombia).');
+            showNotification('error', 'Número inválido', 'Número de teléfono inválido. Asegúrate de incluir el código de país (+57 para Colombia).', 5000);
         } else if (error.code === 'auth/too-many-requests') {
-            alert('Demasiados intentos. Espera unos minutos antes de intentar de nuevo.');
+            showNotification('warning', 'Demasiados intentos', 'Demasiados intentos. Espera unos minutos antes de intentar de nuevo.', 5000);
         } else {
-            alert('Error enviando código: ' + error.message);
+            showNotification('error', 'Error de envío', 'Error enviando código: ' + error.message, 5000);
         }
     }
 }
@@ -71,7 +71,7 @@ async function verifyOTP() {
     const otp = document.getElementById('otp').value;
     
     if (!otp) {
-        alert('Por favor ingresa el código de verificación');
+        showNotification('warning', 'Código requerido', 'Por favor ingresa el código de verificación', 4000);
         return;
     }
     
@@ -84,7 +84,7 @@ async function verifyOTP() {
         
     } catch (error) {
         console.error('Error verificando OTP:', error);
-        alert('Código incorrecto. Intenta de nuevo.');
+        showNotification('error', 'Código incorrecto', 'El código ingresado no es válido. Intenta de nuevo.', 4000);
     }
 }
 
@@ -132,7 +132,7 @@ async function processUserLogin() {
         
     } catch (error) {
         console.error('Error procesando login:', error);
-        alert('Error procesando login. Intenta de nuevo.');
+        showNotification('error', 'Error de login', 'Error procesando login. Intenta de nuevo.', 5000);
     }
 }
 
@@ -166,11 +166,15 @@ async function updateReferrerCount(referralCode) {
 
 // Cerrar sesión
 function logout() {
-    auth.signOut().then(() => {
-        window.location.href = 'index.html';
-    }).catch((error) => {
-        console.error('Error cerrando sesión:', error);
-    });
+    showNotification('info', 'Cerrando sesión', 'Has cerrado sesión correctamente', 2000);
+    
+    setTimeout(() => {
+        auth.signOut().then(() => {
+            window.location.href = 'index.html';
+        }).catch((error) => {
+            console.error('Error cerrando sesión:', error);
+        });
+    }, 1000);
 }
 
 // ==================== FUNCIONES DEL DASHBOARD ====================
@@ -198,9 +202,12 @@ async function loadDashboard() {
         // Cargar historial
         await loadInvestmentHistory();
         
+        // Mostrar notificación de bienvenida
+        showNotification('info', '¡Bienvenido!', 'Tu dashboard ha sido cargado correctamente', 3000);
+        
     } catch (error) {
         console.error('Error cargando dashboard:', error);
-        alert('Error cargando datos. Recarga la página.');
+        showNotification('error', 'Error de carga', 'Error cargando datos. Recarga la página.', 5000);
     }
 }
 
@@ -327,6 +334,8 @@ function showInvestmentModal() {
     document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
     
     modal.style.display = 'block';
+    
+    showNotification('info', 'Nueva inversión', 'Completa los detalles de tu inversión', 3000);
 }
 
 // Cerrar modal de inversión
@@ -339,7 +348,7 @@ async function confirmInvestment() {
     const amount = parseInt(document.getElementById('investment-amount').value);
     
     if (amount < 10000) {
-        alert('El monto mínimo es $10.000');
+        showNotification('warning', 'Monto mínimo', 'El monto mínimo es $10.000', 4000);
         return;
     }
     
@@ -362,22 +371,27 @@ async function confirmInvestment() {
         await loadCurrentInvestment();
         await loadInvestmentHistory();
         
-        alert('Inversión realizada exitosamente');
+        showNotification('success', '¡Inversión exitosa!', 'Tu inversión ha sido realizada correctamente', 5000);
         
     } catch (error) {
         console.error('Error realizando inversión:', error);
-        alert('Error realizando inversión. Intenta de nuevo.');
+        showNotification('error', 'Error de inversión', 'Error realizando inversión. Intenta de nuevo.', 5000);
     }
 }
 
 // Retirar inversión
 async function withdrawInvestment() {
     if (!canUserWithdraw()) {
-        alert('No puedes retirar aún. Necesitas 3 referidos activos y esperar 7 días.');
+        showNotification('warning', 'No puedes retirar', 'Necesitas 3 referidos activos y esperar 7 días para poder retirar tu inversión.', 5000);
         return;
     }
     
-    if (confirm('¿Estás seguro de que quieres retirar tu inversión?')) {
+    const confirmed = await showAlert('question', 'Confirmar retiro', '¿Estás seguro de que quieres retirar tu inversión?', {
+        confirmText: 'Sí, retirar',
+        showCancel: true
+    });
+    
+    if (confirmed) {
         try {
             await db.collection('inversiones').doc(currentInvestment.id).update({
                 estado: 'retirada',
@@ -387,11 +401,11 @@ async function withdrawInvestment() {
             await loadCurrentInvestment();
             await loadInvestmentHistory();
             
-            alert('Inversión retirada exitosamente');
+            showNotification('success', '¡Retiro exitoso!', 'Tu inversión ha sido retirada correctamente', 5000);
             
         } catch (error) {
             console.error('Error retirando inversión:', error);
-            alert('Error retirando inversión. Intenta de nuevo.');
+            showNotification('error', 'Error de retiro', 'Error retirando inversión. Intenta de nuevo.', 5000);
         }
     }
 }
@@ -399,11 +413,16 @@ async function withdrawInvestment() {
 // Reinvertir
 async function reinvestInvestment() {
     if (!canUserWithdraw()) {
-        alert('No puedes reinvertir aún. Necesitas 3 referidos activos y esperar 7 días.');
+        showNotification('warning', 'No puedes reinvertir', 'Necesitas 3 referidos activos y esperar 7 días para poder reinvertir.', 5000);
         return;
     }
     
-    if (confirm('¿Estás seguro de que quieres reinvertir?')) {
+    const confirmed = await showAlert('question', 'Confirmar reinversión', '¿Estás seguro de que quieres reinvertir?', {
+        confirmText: 'Sí, reinvertir',
+        showCancel: true
+    });
+    
+    if (confirmed) {
         try {
             // Marcar inversión actual como reinvertida
             await db.collection('inversiones').doc(currentInvestment.id).update({
@@ -429,11 +448,11 @@ async function reinvestInvestment() {
             await loadCurrentInvestment();
             await loadInvestmentHistory();
             
-            alert('Reinversión realizada exitosamente');
+            showNotification('success', '¡Reinversión exitosa!', 'Tu reinversión ha sido realizada correctamente', 5000);
             
         } catch (error) {
             console.error('Error reinvirtiendo:', error);
-            alert('Error reinvirtiendo. Intenta de nuevo.');
+            showNotification('error', 'Error de reinversión', 'Error reinvirtiendo. Intenta de nuevo.', 5000);
         }
     }
 }
@@ -442,7 +461,7 @@ async function reinvestInvestment() {
 function copyReferralCode() {
     const code = document.getElementById('my-referral-code').textContent;
     navigator.clipboard.writeText(code).then(() => {
-        alert('Código copiado al portapapeles');
+        showNotification('success', 'Código copiado', 'El código de referido ha sido copiado al portapapeles', 3000);
     }).catch(() => {
         // Fallback para navegadores que no soportan clipboard API
         const textArea = document.createElement('textarea');
@@ -451,7 +470,7 @@ function copyReferralCode() {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        alert('Código copiado al portapapeles');
+        showNotification('success', 'Código copiado', 'El código de referido ha sido copiado al portapapeles', 3000);
     });
 }
 
