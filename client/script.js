@@ -15,6 +15,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 // Variables globales
 let currentUser = null;
@@ -651,7 +652,106 @@ async function confirmInvestment() {
         return;
     }
     
+    // Cerrar modal de inversión y mostrar modal de pago
+    closeInvestmentModal();
+    showPaymentModal(planType, amount, modalTitle);
+}
+
+// Mostrar modal de pago
+function showPaymentModal(planType, amount, planName) {
+    const modal = document.getElementById('payment-modal');
+    
+    // Actualizar detalles del pago
+    document.getElementById('payment-plan-name').textContent = planName;
+    document.getElementById('payment-amount').textContent = `$${amount.toLocaleString()}`;
+    document.getElementById('payment-date').textContent = formatDate(new Date());
+    
+    // Guardar datos temporalmente
+    window.tempInvestmentData = {
+        planType: planType,
+        amount: amount,
+        planName: planName
+    };
+    
+    modal.style.display = 'block';
+    
+    showNotification('info', 'Proceso de Pago', 'Completa el proceso de pago para continuar', 3000);
+}
+
+// Cerrar modal de pago
+function closePaymentModal() {
+    document.getElementById('payment-modal').style.display = 'none';
+    // Limpiar datos temporales
+    window.tempInvestmentData = null;
+    // Limpiar archivo cargado
+    removeFile();
+}
+
+// Copiar número de Nequi
+function copyNequiNumber() {
+    const nequiNumber = '3506049629';
+    navigator.clipboard.writeText(nequiNumber).then(() => {
+        showNotification('success', 'Número copiado', 'Número de Nequi copiado al portapapeles', 2000);
+    }).catch(() => {
+        showNotification('error', 'Error', 'No se pudo copiar el número', 2000);
+    });
+}
+
+// Manejar carga de archivo
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Validar tipo de archivo
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+        if (!validTypes.includes(file.type)) {
+            showNotification('error', 'Tipo de archivo no válido', 'Solo se permiten imágenes (JPG, PNG, GIF) y PDF', 4000);
+            return;
+        }
+        
+        // Validar tamaño (máximo 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('error', 'Archivo muy grande', 'El archivo debe ser menor a 5MB', 4000);
+            return;
+        }
+        
+        // Mostrar archivo cargado
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('upload-area').style.display = 'none';
+        document.getElementById('uploaded-file').style.display = 'block';
+        document.getElementById('process-payment-btn').disabled = false;
+        
+        // Guardar archivo temporalmente
+        window.tempFile = file;
+        
+        showNotification('success', 'Archivo cargado', 'Comprobante cargado correctamente', 2000);
+    }
+}
+
+// Remover archivo
+function removeFile() {
+    document.getElementById('proof-file').value = '';
+    document.getElementById('upload-area').style.display = 'block';
+    document.getElementById('uploaded-file').style.display = 'none';
+    document.getElementById('process-payment-btn').disabled = true;
+    window.tempFile = null;
+}
+
+// Procesar pago
+async function processPayment() {
+    if (!window.tempFile) {
+        showNotification('warning', 'Comprobante requerido', 'Debes cargar el comprobante de pago', 4000);
+        return;
+    }
+    
+    if (!window.tempInvestmentData) {
+        showNotification('error', 'Error', 'Datos de inversión no encontrados', 4000);
+        return;
+    }
+    
     try {
+        const { planType, amount, planName } = window.tempInvestmentData;
+        
+        // Crear la inversión con estado 'pendiente'
         const today = new Date();
         const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
         
@@ -659,24 +759,58 @@ async function confirmInvestment() {
             uid: currentUser.uid,
             monto: amount,
             planTipo: planType,
-            planNombre: modalTitle,
+            planNombre: planName,
             fechaInversion: today,
             fechaDisponibleRetiro: withdrawalDate,
-            estado: 'activa',
-            fechaCreacion: new Date()
+            estado: 'pendiente',
+            fechaCreacion: new Date(),
+            comprobanteCargado: true,
+            fechaComprobante: new Date()
         };
         
-        await db.collection('inversiones').add(investmentData);
+        // Subir el comprobante a Firebase Storage
+        const storageRef = storage.ref();
+        const fileRef = storageRef.child(`comprobantes/${currentUser.uid}/${Date.now()}_${window.tempFile.name}`);
         
-        closeInvestmentModal();
-        await loadCurrentInvestment();
-        await loadInvestmentHistory();
+        const uploadTask = fileRef.put(window.tempFile);
         
-        showNotification('success', '¡Inversión exitosa!', `Tu ${modalTitle} ha sido realizada correctamente`, 5000, true);
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                // Progreso de carga
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                console.log('Upload is ' + progress + '% done');
+            },
+            (error) => {
+                console.error('Error uploading file:', error);
+                showNotification('error', 'Error', 'Error cargando el comprobante', 4000);
+            },
+            async () => {
+                // Carga completada
+                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                investmentData.comprobanteURL = downloadURL;
+                
+                // Guardar inversión en Firestore
+                const investmentRef = await db.collection('inversiones').add(investmentData);
+                
+                // Cerrar modal de pago
+                closePaymentModal();
+                
+                // Redirigir a WhatsApp
+                const message = `Confirmen mi inversión de $${amount.toLocaleString()}`;
+                const whatsappURL = `https://wa.me/573506049629?text=${encodeURIComponent(message)}`;
+                window.open(whatsappURL, '_blank');
+                
+                // Recargar dashboard
+                await loadCurrentInvestment();
+                await loadInvestmentHistory();
+                
+                showNotification('success', '¡Inversión enviada!', 'Tu inversión ha sido enviada para aprobación. Revisa WhatsApp para confirmar.', 5000, true);
+            }
+        );
         
     } catch (error) {
-        console.error('Error realizando inversión:', error);
-        showNotification('error', 'Error de inversión', 'Error realizando inversión. Intenta de nuevo.', 5000);
+        console.error('Error procesando pago:', error);
+        showNotification('error', 'Error de pago', 'Error procesando el pago. Intenta de nuevo.', 5000);
     }
 }
 
@@ -862,4 +996,10 @@ window.withdrawInvestment = withdrawInvestment;
 window.reinvestInvestment = reinvestInvestment;
 window.copyReferralCode = copyReferralCode;
 window.showNotificationsPanel = showNotificationsPanel;
-window.selectPlan = selectPlan; 
+window.selectPlan = selectPlan;
+window.showPaymentModal = showPaymentModal;
+window.closePaymentModal = closePaymentModal;
+window.copyNequiNumber = copyNequiNumber;
+window.handleFileUpload = handleFileUpload;
+window.removeFile = removeFile;
+window.processPayment = processPayment; 

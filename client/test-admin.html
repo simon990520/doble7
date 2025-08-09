@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="notification-styles.css">
+    <link rel="stylesheet" href="admin-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Test Admin Panel Functions</h1>
+        <div class="test-buttons">
+            <button onclick="testShowSection()">Test showSection</button>
+            <button onclick="testLogout()">Test logout</button>
+            <button onclick="testRefreshDashboard()">Test refreshDashboard</button>
+            <button onclick="testShowNotificationsPanel()">Test showNotificationsPanel</button>
+        </div>
+        <div id="test-results"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Scripts -->
+    <script src="notifications.js"></script>
+    <script src="alert-system.js"></script>
+    <script src="admin.js"></script>
+    
+    <script>
+        function testShowSection() {
+            try {
+                if (typeof showSection === 'function') {
+                    document.getElementById('test-results').innerHTML += '<p style="color: green;">✓ showSection function is available</p>';
+                } else {
+                    document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ showSection function is NOT available</p>';
+                }
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ Error testing showSection: ' + error.message + '</p>';
+            }
+        }
+        
+        function testLogout() {
+            try {
+                if (typeof logout === 'function') {
+                    document.getElementById('test-results').innerHTML += '<p style="color: green;">✓ logout function is available</p>';
+                } else {
+                    document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ logout function is NOT available</p>';
+                }
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ Error testing logout: ' + error.message + '</p>';
+            }
+        }
+        
+        function testRefreshDashboard() {
+            try {
+                if (typeof refreshDashboard === 'function') {
+                    document.getElementById('test-results').innerHTML += '<p style="color: green;">✓ refreshDashboard function is available</p>';
+                } else {
+                    document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ refreshDashboard function is NOT available</p>';
+                }
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ Error testing refreshDashboard: ' + error.message + '</p>';
+            }
+        }
+        
+        function testShowNotificationsPanel() {
+            try {
+                if (typeof showNotificationsPanel === 'function') {
+                    document.getElementById('test-results').innerHTML += '<p style="color: green;">✓ showNotificationsPanel function is available</p>';
+                } else {
+                    document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ showNotificationsPanel function is NOT available</p>';
+                }
+            } catch (error) {
+                document.getElementById('test-results').innerHTML += '<p style="color: red;">✗ Error testing showNotificationsPanel: ' + error.message + '</p>';
+            }
+        }
+        
+        // Test all functions on load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('test-results').innerHTML = '<h3>Testing Admin Panel Functions:</h3>';
+            testShowSection();
+            testLogout();
+            testRefreshDashboard();
+            testShowNotificationsPanel();
+        });
+    </script>
+</body>
+</html> 

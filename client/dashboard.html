@@ -281,10 +281,86 @@
         </div>
     </div>
 
+    <!-- Modal de Pago -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirmar Pago</h3>
+                <button class="close-btn" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-info">
+                    <div class="payment-instructions">
+                        <h4>Instrucciones de Pago</h4>
+                        <div class="nequi-info">
+                            <div class="nequi-number">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span class="number">3506049629</span>
+                                <button class="btn btn-small" onclick="copyNequiNumber()">Copiar</button>
+                            </div>
+                            <p class="nequi-label">Número de Nequi</p>
+                        </div>
+                        <div class="payment-steps">
+                            <ol>
+                                <li>Realiza la consignación al número de Nequi: <strong>3506049629</strong></li>
+                                <li>Guarda el comprobante de la transacción</li>
+                                <li>Carga el comprobante en el campo de abajo</li>
+                                <li>Haz clic en "Confirmar Pago"</li>
+                                <li>Serás redirigido a WhatsApp para confirmar</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-details">
+                        <h4>Detalles de la Inversión</h4>
+                        <div class="payment-detail-item">
+                            <span class="label">Plan:</span>
+                            <span class="value" id="payment-plan-name">-</span>
+                        </div>
+                        <div class="payment-detail-item">
+                            <span class="label">Monto:</span>
+                            <span class="value" id="payment-amount">-</span>
+                        </div>
+                        <div class="payment-detail-item">
+                            <span class="label">Fecha:</span>
+                            <span class="value" id="payment-date">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="proof-upload">
+                        <h4>Comprobante de Pago</h4>
+                        <div class="upload-area" id="upload-area" onclick="document.getElementById('proof-file').click()">
+                            <input type="file" id="proof-file" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                            <div class="upload-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Haz clic para cargar el comprobante de pago</p>
+                                <small>Acepta: JPG, PNG, PDF</small>
+                            </div>
+                        </div>
+                        <div class="uploaded-file" id="uploaded-file" style="display: none;">
+                            <div class="file-info">
+                                <i class="fas fa-file-image"></i>
+                                <span id="file-name">-</span>
+                                <button class="btn btn-small" onclick="removeFile()">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePaymentModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="processPayment()" id="process-payment-btn" disabled>
+                    <i class="fas fa-whatsapp"></i> Confirmar Pago
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-storage-compat.js"></script>
     <script src="notifications.js"></script>
     <script src="script.js"></script>
 </body>

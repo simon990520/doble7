@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Doble7</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="notification-styles.css">
+    <link rel="stylesheet" href="admin-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" fill="currentColor"/>
+                                <path d="M19 15L19.74 17.74L22.5 18.5L19.74 19.26L19 22L18.26 19.26L15.5 18.5L18.26 17.74L19 15Z" fill="currentColor"/>
+                                <path d="M5 6L5.5 7.5L7 8L5.5 8.5L5 10L4.5 8.5L3 8L4.5 7.5L5 6Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="logo-text">
+                            <h1>Doble7</h1>
+                            <span class="logo-subtitle">Panel de Administración</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="admin-profile">
+                        <div class="admin-avatar">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div class="admin-details">
+                            <span class="admin-name">Administrador</span>
+                            <span class="admin-phone" id="admin-phone">+573506049629</span>
+                        </div>
+                        <div class="admin-actions">
+                            <button class="btn btn-icon" onclick="logout()" title="Cerrar Sesión">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="admin-layout">
+            <!-- Sidebar de Navegación -->
+            <nav class="admin-sidebar">
+                <div class="nav-section">
+                    <h3>Administración</h3>
+                    <ul class="nav-menu">
+                        <li>
+                            <button class="nav-btn active" onclick="showSection('dashboard')">
+                                <i class="fas fa-tachometer-alt"></i>
+                                Dashboard
+                            </button>
+                        </li>
+                        <li>
+                            <button class="nav-btn" onclick="showSection('users')">
+                                <i class="fas fa-users"></i>
+                                Usuarios
+                            </button>
+                        </li>
+                        <li>
+                            <button class="nav-btn" onclick="showSection('investments')">
+                                <i class="fas fa-chart-line"></i>
+                                Inversiones
+                            </button>
+                        </li>
+                        <li>
+                            <button class="nav-btn" onclick="showSection('withdrawals')">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Retiros
+                            </button>
+                        </li>
+                        <li>
+                            <button class="nav-btn" onclick="showSection('referrals')">
+                                <i class="fas fa-network-wired"></i>
+                                Referidos
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Contenido Principal -->
+            <main class="admin-content">
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="admin-section active">
+                    <div class="section-header">
+                        <h2>Dashboard</h2>
+                        <button class="btn btn-primary" onclick="refreshDashboard()">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Total Usuarios</h3>
+                                <p id="total-users">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Inversiones Activas</h3>
+                                <p id="total-active-investments">0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Total Invertido</h3>
+                                <p id="total-invested">$0</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Total Retirado</h3>
+                                <p id="total-withdrawn">$0</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alerts-section">
+                        <h3>Alertas Recientes</h3>
+                        <div id="alerts-list" class="alerts-list">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>Gestión de Usuarios</h2>
+                        <div class="section-actions">
+                            <input type="text" id="user-search" placeholder="Buscar usuarios..." class="search-input">
+                            <button class="btn btn-primary" onclick="refreshUsers()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Teléfono</th>
+                                    <th>Código Referido</th>
+                                    <th>Referidos Activos</th>
+                                    <th>Total Invertido</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Investments Section -->
+                <section id="investments-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>Gestión de Inversiones</h2>
+                        <div class="section-actions">
+                            <select id="investment-status-filter" class="filter-select">
+                                <option value="">Todos los estados</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="activa">Activa</option>
+                                <option value="retirada">Retirada</option>
+                                <option value="rechazada">Rechazada</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="refreshInvestments()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Usuario</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Inversión</th>
+                                    <th>Fecha Retiro</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investments-table-body">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Withdrawals Section -->
+                <section id="withdrawals-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>Gestión de Retiros</h2>
+                        <button class="btn btn-primary" onclick="refreshWithdrawals()">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Monto</th>
+                                    <th>Fecha Disponible</th>
+                                    <th>Referidos Activos</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawals-table-body">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Referrals Section -->
+                <section id="referrals-section" class="admin-section">
+                    <div class="section-header">
+                        <h2>Gestión de Referidos</h2>
+                        <div class="section-actions">
+                            <input type="text" id="referral-search" placeholder="Buscar referidos..." class="search-input">
+                            <button class="btn btn-primary" onclick="refreshReferrals()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Código Referido</th>
+                                    <th>Total Referidos</th>
+                                    <th>Referidos Activos</th>
+                                    <th>Total Generado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="referrals-table-body">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Detalles de Usuario -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalles del Usuario</h3>
+                <button class="close-btn" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="user-modal-body">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalles de Inversión -->
+    <div id="investment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalles de la Inversión</h3>
+                <button class="close-btn" onclick="closeInvestmentModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="investment-modal-body">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="notifications.js"></script>
+    <script src="alert-system.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html> 
