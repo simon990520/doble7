@@ -546,6 +546,205 @@ body {
     flex-wrap: wrap;
 }
 
+/* Planes de Inversión */
+.investments-plans {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.investments-plans h2 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    color: #333;
+    text-align: center;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.plan-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 30px;
+    position: relative;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.plan-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.plan-card.plan-seed {
+    border-color: #4CAF50;
+}
+
+.plan-card.plan-progress {
+    border-color: #2196F3;
+}
+
+.plan-card.plan-elite {
+    border-color: #9C27B0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+}
+
+.plan-header {
+    text-align: center;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.plan-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.plan-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.plan-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.plan-content {
+    margin-bottom: 25px;
+}
+
+.plan-amount {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.amount-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.amount-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.plan-details {
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item i {
+    width: 20px;
+    color: #667eea;
+    font-size: 1rem;
+}
+
+.detail-item span {
+    color: #333;
+    font-weight: 500;
+}
+
+.plan-benefits {
+    margin-bottom: 20px;
+}
+
+.plan-benefits h4 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.plan-benefits ul {
+    list-style: none;
+    padding: 0;
+}
+
+.plan-benefits li {
+    padding: 8px 0;
+    color: #666;
+    position: relative;
+    padding-left: 20px;
+}
+
+.plan-benefits li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.plan-description {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.plan-description p {
+    margin: 0;
+    color: #333;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.plan-footer {
+    text-align: center;
+}
+
+.plan-btn {
+    width: 100%;
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.plan-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
 /* Sistema de Referidos */
 .referral-system {
     background: white;
@@ -805,6 +1004,27 @@ body {
         flex-direction: column;
     }
     
+    .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .plan-card {
+        padding: 25px;
+    }
+    
+    .plan-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .plan-icon {
+        font-size: 2.5rem;
+    }
+    
+    .amount-value {
+        font-size: 1.5rem;
+    }
+    
     .referral-info {
         grid-template-columns: 1fr;
     }
@@ -850,8 +1070,32 @@ body {
     }
     
     .modal-content {
-        margin: 5% auto;
         width: 95%;
+        margin: 10% auto;
+    }
+    
+    .plans-grid {
+        gap: 15px;
+    }
+    
+    .plan-card {
+        padding: 20px;
+    }
+    
+    .plan-header h3 {
+        font-size: 1.2rem;
+    }
+    
+    .plan-icon {
+        font-size: 2rem;
+    }
+    
+    .amount-value {
+        font-size: 1.3rem;
+    }
+    
+    .plan-description {
+        padding: 12px;
     }
     
     .notifications-btn {
@@ -866,6 +1110,6 @@ body {
     .notification-badge {
         width: 18px;
         height: 18px;
-        font-size: 10px;
+        font-size: 0.7rem;
     }
 } 

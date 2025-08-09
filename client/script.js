@@ -21,6 +21,10 @@ let currentUser = null;
 let userData = null;
 let currentInvestment = null;
 
+// Credenciales de administrador
+const ADMIN_PHONE = "+573506049629";
+const ADMIN_CODE = "990520";
+
 // Función de respaldo para notificaciones si el sistema no está disponible
 function showNotification(type, title, message, duration = 5000, persistent = false) {
     if (typeof notificationSystem !== 'undefined' && notificationSystem.showNotification) {
@@ -206,6 +210,11 @@ function logout() {
     }, 1000);
 }
 
+// Función para ir al panel de administración
+function goToAdmin() {
+    window.location.href = 'admin.html';
+}
+
 // ==================== FUNCIONES DEL DASHBOARD ====================
 
 // Cargar datos del dashboard
@@ -230,10 +239,16 @@ async function loadDashboard() {
         const userPhoneElement = document.getElementById('user-phone');
         const referralCodeElement = document.getElementById('my-referral-code');
         const activeReferralsElement = document.getElementById('active-referrals');
+        const adminButton = document.getElementById('admin-btn');
         
         if (userPhoneElement) userPhoneElement.textContent = userData.telefono;
         if (referralCodeElement) referralCodeElement.textContent = userData.miCodigo;
         if (activeReferralsElement) activeReferralsElement.textContent = userData.referidosActivos;
+        
+        // Mostrar botón de administración si es el administrador
+        if (adminButton && userData.telefono === ADMIN_PHONE) {
+            adminButton.style.display = 'flex';
+        }
         
         console.log('Información del usuario actualizada en el DOM');
         
@@ -519,6 +534,72 @@ function getStatusText(estado) {
 
 // ==================== FUNCIONES DE INVERSIÓN ====================
 
+// Seleccionar plan de inversión
+function selectPlan(planType, defaultAmount) {
+    const modal = document.getElementById('investment-modal');
+    const amountInput = document.getElementById('investment-amount');
+    const modalTitle = document.querySelector('#investment-modal .modal-header h3');
+    const planNameSpan = document.getElementById('modal-plan-name');
+    const planDescriptionSpan = document.getElementById('modal-plan-description');
+    const investmentHint = document.getElementById('investment-hint');
+    
+    // Configurar el modal según el plan seleccionado
+    let planName, planDescription, minAmount, maxAmount, hint;
+    
+    switch(planType) {
+        case 'semilla':
+            planName = 'Plan Semilla 🌱';
+            planDescription = 'Inversión mínima: $10.000 COP - Rentabilidad: 100%';
+            minAmount = 10000;
+            maxAmount = 10000;
+            hint = 'Monto fijo: $10.000 COP';
+            break;
+        case 'progreso':
+            planName = 'Plan Progreso 🚀';
+            planDescription = 'Inversión: $50.000, $150.000 o $500.000 COP - Rentabilidad: 100%';
+            minAmount = 50000;
+            maxAmount = 500000;
+            hint = 'Montos disponibles: $50.000, $150.000 o $500.000 COP';
+            break;
+        case 'elite':
+            planName = 'Plan Élite 💎';
+            planDescription = 'Inversión: $1.000.000 COP - Rentabilidad: 100%';
+            minAmount = 1000000;
+            maxAmount = 1000000;
+            hint = 'Monto fijo: $1.000.000 COP';
+            break;
+    }
+    
+    // Actualizar el modal
+    modalTitle.textContent = planName;
+    planNameSpan.textContent = planName;
+    planDescriptionSpan.textContent = planDescription;
+    investmentHint.textContent = hint;
+    
+    // Actualizar el campo de monto
+    amountInput.value = defaultAmount;
+    amountInput.min = minAmount;
+    amountInput.max = maxAmount;
+    if (minAmount === maxAmount) {
+        amountInput.readOnly = true;
+        amountInput.style.backgroundColor = '#f8f9fa';
+    } else {
+        amountInput.readOnly = false;
+        amountInput.style.backgroundColor = 'white';
+    }
+    
+    // Mostrar fechas
+    const today = new Date();
+    const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('modal-investment-date').textContent = formatDate(today);
+    document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    
+    modal.style.display = 'block';
+    
+    showNotification('info', 'Plan Seleccionado', `Has seleccionado el ${planName}`, 3000);
+}
+
 // Mostrar modal de inversión
 function showInvestmentModal() {
     const modal = document.getElementById('investment-modal');
@@ -541,6 +622,29 @@ function closeInvestmentModal() {
 // Confirmar inversión
 async function confirmInvestment() {
     const amount = parseInt(document.getElementById('investment-amount').value);
+    const modalTitle = document.querySelector('#investment-modal .modal-header h3').textContent;
+    
+    // Determinar el plan basado en el título del modal
+    let planType = 'general';
+    if (modalTitle.includes('Semilla')) {
+        planType = 'semilla';
+        if (amount !== 10000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Semilla requiere exactamente $10.000', 4000);
+            return;
+        }
+    } else if (modalTitle.includes('Progreso')) {
+        planType = 'progreso';
+        if (![50000, 150000, 500000].includes(amount)) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Progreso requiere $50.000, $150.000 o $500.000', 4000);
+            return;
+        }
+    } else if (modalTitle.includes('Élite')) {
+        planType = 'elite';
+        if (amount !== 1000000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Élite requiere exactamente $1.000.000', 4000);
+            return;
+        }
+    }
     
     if (amount < 10000) {
         showNotification('warning', 'Monto mínimo', 'El monto mínimo es $10.000', 4000);
@@ -554,6 +658,8 @@ async function confirmInvestment() {
         const investmentData = {
             uid: currentUser.uid,
             monto: amount,
+            planTipo: planType,
+            planNombre: modalTitle,
             fechaInversion: today,
             fechaDisponibleRetiro: withdrawalDate,
             estado: 'activa',
@@ -566,7 +672,7 @@ async function confirmInvestment() {
         await loadCurrentInvestment();
         await loadInvestmentHistory();
         
-        showNotification('success', '¡Inversión exitosa!', 'Tu inversión ha sido realizada correctamente', 5000, true);
+        showNotification('success', '¡Inversión exitosa!', `Tu ${modalTitle} ha sido realizada correctamente`, 5000, true);
         
     } catch (error) {
         console.error('Error realizando inversión:', error);
@@ -741,4 +847,19 @@ window.onclick = function(event) {
     if (event.target === modal) {
         closeInvestmentModal();
     }
-} 
+}
+
+// Hacer funciones disponibles globalmente
+window.sendOTP = sendOTP;
+window.verifyOTP = verifyOTP;
+window.backToPhone = backToPhone;
+window.logout = logout;
+window.goToAdmin = goToAdmin;
+window.showInvestmentModal = showInvestmentModal;
+window.closeInvestmentModal = closeInvestmentModal;
+window.confirmInvestment = confirmInvestment;
+window.withdrawInvestment = withdrawInvestment;
+window.reinvestInvestment = reinvestInvestment;
+window.copyReferralCode = copyReferralCode;
+window.showNotificationsPanel = showNotificationsPanel;
+window.selectPlan = selectPlan; 
