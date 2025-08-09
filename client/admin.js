@@ -599,51 +599,105 @@ async function viewInvestmentDetails(investmentId) {
 }
 
 async function approveInvestment(investmentId) {
-    const confirmed = await showAlert('question', 'Aprobar Inversión', '¿Estás seguro de que quieres aprobar esta inversión?', {
-        confirmText: 'Sí, aprobar',
-        showCancel: true
-    });
+    console.log('🚀 approveInvestment iniciada con ID:', investmentId);
     
-    if (confirmed) {
-        try {
-            await db.collection('inversiones').doc(investmentId).update({
+    try {
+        console.log('🔍 Verificando funciones disponibles...');
+        console.log('🔍 showAlert disponible:', typeof showAlert);
+        console.log('🔍 alertSystem disponible:', typeof alertSystem);
+        
+        let confirmed;
+        
+        // Usar confirm nativo directamente para evitar bloqueos
+        console.log('🔍 Usando confirm nativo...');
+        confirmed = confirm('¿Estás seguro de que quieres aprobar esta inversión?');
+        console.log('✅ confirm nativo resultado:', confirmed);
+        
+        if (confirmed) {
+            console.log('👍 Usuario confirmó, actualizando inversión...');
+            
+            const updateData = {
                 estado: 'activa',
-                aprobadaPor: currentUser.uid,
+                aprobadaPor: currentUser?.uid || 'admin-user',
                 fechaAprobacion: new Date()
-            });
+            };
             
-            showNotification('success', 'Inversión Aprobada', 'La inversión ha sido aprobada correctamente', 3000);
-            loadInvestments(); // Recargar lista
+            console.log('📝 Datos a actualizar:', updateData);
+            console.log('🔗 currentUser:', currentUser);
+            console.log('🗄️ db disponible:', !!db);
             
-        } catch (error) {
-            console.error('Error aprobando inversión:', error);
-            showNotification('error', 'Error', 'Error aprobando inversión', 3000);
+            if (!db) {
+                throw new Error('Base de datos no disponible');
+            }
+            
+            const result = await db.collection('inversiones').doc(investmentId).update(updateData);
+            console.log('✅ Inversión actualizada exitosamente:', result);
+            
+            if (typeof showNotification === 'function') {
+                showNotification('success', 'Inversión Aprobada', 'La inversión ha sido aprobada correctamente', 3000);
+            } else {
+                alert('Inversión aprobada correctamente');
+            }
+            
+            console.log('🔄 Recargando lista de inversiones...');
+            await loadInvestments();
+            console.log('✅ Lista recargada');
+            
+        } else {
+            console.log('❌ Usuario canceló la aprobación');
+        }
+    } catch (error) {
+        console.error('💥 Error aprobando inversión:', error);
+        console.error('💥 Stack trace:', error.stack);
+        
+        if (typeof showNotification === 'function') {
+            showNotification('error', 'Error', 'Error aprobando inversión: ' + error.message, 5000);
+        } else {
+            alert('Error aprobando inversión: ' + error.message);
         }
     }
 }
 
 async function rejectInvestment(investmentId) {
-    const confirmed = await showAlert('question', 'Rechazar Inversión', '¿Estás seguro de que quieres rechazar esta inversión?', {
-        confirmText: 'Sí, rechazar',
-        dangerText: 'Cancelar',
-        showCancel: false
-    });
+    console.log('🚀 rejectInvestment iniciada con ID:', investmentId);
+    
+    // Usar confirm nativo directamente para evitar bloqueos
+    const confirmed = confirm('¿Estás seguro de que quieres rechazar esta inversión?');
+    console.log('✅ confirm nativo resultado:', confirmed);
     
     if (confirmed) {
         try {
-            await db.collection('inversiones').doc(investmentId).update({
-                estado: 'rechazada',
-                rechazadaPor: currentUser.uid,
-                fechaRechazo: new Date()
-            });
+            console.log('👍 Usuario confirmó, rechazando inversión...');
             
-            showNotification('success', 'Inversión Rechazada', 'La inversión ha sido rechazada', 3000);
-            loadInvestments(); // Recargar lista
+            const updateData = {
+                estado: 'rechazada',
+                rechazadaPor: currentUser?.uid || 'admin-user',
+                fechaRechazo: new Date()
+            };
+            
+            console.log('📝 Datos a actualizar:', updateData);
+            
+            await db.collection('inversiones').doc(investmentId).update(updateData);
+            console.log('✅ Inversión rechazada exitosamente');
+            
+            if (typeof showNotification === 'function') {
+                showNotification('success', 'Inversión Rechazada', 'La inversión ha sido rechazada', 3000);
+            } else {
+                alert('Inversión rechazada correctamente');
+            }
+            
+            await loadInvestments(); // Recargar lista
             
         } catch (error) {
-            console.error('Error rechazando inversión:', error);
-            showNotification('error', 'Error', 'Error rechazando inversión', 3000);
+            console.error('💥 Error rechazando inversión:', error);
+            if (typeof showNotification === 'function') {
+                showNotification('error', 'Error', 'Error rechazando inversión', 3000);
+            } else {
+                alert('Error rechazando inversión: ' + error.message);
+            }
         }
+    } else {
+        console.log('❌ Usuario canceló el rechazo');
     }
 }
 
@@ -717,26 +771,47 @@ async function loadWithdrawals() {
 }
 
 async function approveWithdrawal(withdrawalId) {
-    const confirmed = await showAlert('question', 'Aprobar Retiro', '¿Estás seguro de que quieres aprobar este retiro?', {
-        confirmText: 'Sí, aprobar',
-        showCancel: true
-    });
+    console.log('🚀 approveWithdrawal iniciada con ID:', withdrawalId);
+    
+    // Usar confirm nativo directamente para evitar bloqueos
+    const confirmed = confirm('¿Estás seguro de que quieres aprobar este retiro?');
+    console.log('✅ confirm nativo resultado:', confirmed);
     
     if (confirmed) {
         try {
-            await db.collection('inversiones').doc(withdrawalId).update({
+            console.log('👍 Usuario confirmó, aprobando retiro...');
+            
+            const updateData = {
                 estado: 'retirada',
                 fechaRetiro: new Date(),
-                aprobadoPor: currentUser.uid
-            });
+                aprobadoPor: currentUser?.uid || 'admin-user'
+            };
             
-            showNotification('success', 'Retiro Aprobado', 'El retiro ha sido aprobado correctamente', 3000);
-            loadWithdrawals(); // Recargar lista
+            console.log('📝 Datos a actualizar:', updateData);
+            
+            await db.collection('inversiones').doc(withdrawalId).update(updateData);
+            console.log('✅ Retiro aprobado exitosamente');
+            
+            if (typeof showNotification === 'function') {
+                showNotification('success', 'Retiro Aprobado', 'El retiro ha sido aprobado correctamente', 3000);
+            } else {
+                alert('Retiro aprobado correctamente');
+            }
+            
+            console.log('🔄 Recargando lista de retiros...');
+            await loadWithdrawals(); // Recargar lista
+            console.log('✅ Lista de retiros recargada');
             
         } catch (error) {
-            console.error('Error aprobando retiro:', error);
-            showNotification('error', 'Error', 'Error aprobando retiro', 3000);
+            console.error('💥 Error aprobando retiro:', error);
+            if (typeof showNotification === 'function') {
+                showNotification('error', 'Error', 'Error aprobando retiro', 3000);
+            } else {
+                alert('Error aprobando retiro: ' + error.message);
+            }
         }
+    } else {
+        console.log('❌ Usuario canceló la aprobación del retiro');
     }
 }
 
@@ -1049,6 +1124,13 @@ window.approveWithdrawal = approveWithdrawal;
 window.viewReferralNetwork = viewReferralNetwork;
 window.viewPaymentProof = viewPaymentProof;
 window.downloadProof = downloadProof;
+
+// Debug: Verificar que las funciones están disponibles
+console.log('🔧 Funciones globales disponibles:', {
+    approveInvestment: typeof window.approveInvestment,
+    showAlert: typeof window.showAlert,
+    alertSystem: typeof alertSystem
+});
 
 // Inicializar cuando el DOM esté listo
 // Ya se maneja en la inicialización de Firebase arriba

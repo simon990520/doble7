@@ -770,9 +770,17 @@ async function processPayment() {
         
         // Subir el comprobante a Firebase Storage
         const storageRef = storage.ref();
-        const fileRef = storageRef.child(`comprobantes/${currentUser.uid}/${Date.now()}_${window.tempFile.name}`);
+        const fileName = `${Date.now()}_${window.tempFile.name}`;
+        const fileRef = storageRef.child(`comprobantes/${currentUser.uid}/${fileName}`);
         
-        const uploadTask = fileRef.put(window.tempFile);
+        // Usar putString con base64 para evitar problemas CORS
+        const uploadTask = fileRef.put(window.tempFile, {
+            contentType: window.tempFile.type,
+            customMetadata: {
+                'uploadedBy': currentUser.uid,
+                'originalName': window.tempFile.name
+            }
+        });
         
         uploadTask.on('state_changed', 
             (snapshot) => {

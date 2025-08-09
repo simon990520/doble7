@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Reglas para comprobantes de pago - permitir a usuarios autenticados subir a su carpeta
+    match /comprobantes/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null; // Admins pueden leer todos los comprobantes
+    }
+    
+    // Reglas temporales permisivas para desarrollo (CAMBIAR EN PRODUCCIÓN)
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

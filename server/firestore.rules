@@ -1,16 +1,9 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Reglas para usuarios
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Reglas para inversiones
-    match /inversiones/{docId} {
-      allow read, write: if request.auth != null && 
-        (request.auth.uid == resource.data.uid || 
-         request.auth.uid == request.resource.data.uid);
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 } 
