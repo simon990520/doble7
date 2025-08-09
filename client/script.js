@@ -557,10 +557,10 @@ function selectPlan(planType, defaultAmount) {
             break;
         case 'progreso':
             planName = 'Plan Progreso 🚀';
-            planDescription = 'Inversión: $50.000, $150.000 o $500.000 COP - Rentabilidad: 100%';
-            minAmount = 50000;
+            planDescription = 'Inversión: $150.000 COP - Rentabilidad: 100%';
+            minAmount = 150000;
             maxAmount = 500000;
-            hint = 'Montos disponibles: $50.000, $150.000 o $500.000 COP';
+            hint = 'Montos disponibles: $150.000 COP';
             break;
         case 'elite':
             planName = 'Plan Élite 💎';
