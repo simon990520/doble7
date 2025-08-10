@@ -70,16 +70,14 @@
                         <p class="amount" id="current-investment">$0</p>
                     </div>
                     <div class="summary-card">
-                        <h3>Fecha de Inversión</h3>
-                        <p id="investment-date">-</p>
+                        <h3>Ganancias acumuladas</h3>
+                        <p class="amount" id="accumulated-earnings">$0</p>
                     </div>
                     <div class="summary-card">
                         <h3>Disponible para Retiro</h3>
-                        <p id="withdrawal-date">-</p>
-                    </div>
-                    <div class="summary-card">
-                        <h3>Estado</h3>
-                        <p id="investment-status">Sin inversión activa</p>
+                        <p class="amount" id="available-withdraw-amount">$0</p>
+                        <button class="btn btn-primary btn-small" id="withdraw-request-btn" onclick="requestWithdrawal()">Retirar</button>
+                        <small>Solo inversiones con 7 días cumplidos</small>
                     </div>
                 </div>
             </section>

@@ -365,6 +365,9 @@ function updateInvestmentDisplay() {
         const investmentDateElement = document.getElementById('investment-date');
         const withdrawalDateElement = document.getElementById('withdrawal-date');
         const investmentStatusElement = document.getElementById('investment-status');
+        const accumulatedEarningsElement = document.getElementById('accumulated-earnings');
+        const availableWithdrawAmountElement = document.getElementById('available-withdraw-amount');
+        const withdrawRequestBtn = document.getElementById('withdraw-request-btn');
         
         if (currentInvestmentElement) {
             currentInvestmentElement.textContent = `$${window.totalInvertido.toLocaleString()}`;
@@ -385,6 +388,20 @@ function updateInvestmentDisplay() {
             investmentStatusElement.textContent = 'Activa';
             console.log('Estado actualizado a Activa');
         }
+
+        // Calcular ganancias acumuladas y disponible para retiro
+        const today = new Date();
+        const startDate = new Date(currentInvestment.fechaInversion);
+        const endDate = new Date(currentInvestment.fechaDisponibleRetiro);
+        const daysElapsed = Math.max(0, Math.min(7, Math.floor((today - startDate) / (24 * 60 * 60 * 1000))));
+        // 100% en 7 días: ganancia diaria = monto / 7
+        const dailyProfit = currentInvestment.monto / 7;
+        const accumulated = Math.round(dailyProfit * daysElapsed); // ganancias acumuladas hasta hoy
+        const available = today >= endDate ? accumulated : 0; // solo ganancias de inversiones con 7 días
+
+        if (accumulatedEarningsElement) accumulatedEarningsElement.textContent = `$${accumulated.toLocaleString()}`;
+        if (availableWithdrawAmountElement) availableWithdrawAmountElement.textContent = `$${available.toLocaleString()}`;
+        if (withdrawRequestBtn) withdrawRequestBtn.disabled = available <= 0;
         
         // Verificar si puede retirar
         const canWithdraw = canUserWithdraw();
@@ -445,6 +462,39 @@ function canUserWithdraw() {
     const hasEnoughReferrals = userData.referidosActivos >= 3;
     
     return today >= withdrawalDate && hasEnoughReferrals;
+}
+
+// Solicitar retiro al administrador (valida 7 días)
+async function requestWithdrawal() {
+    try {
+        if (!currentInvestment) {
+            showNotification('warning', 'Sin inversión', 'No tienes una inversión activa.', 4000);
+            return;
+        }
+        
+        const today = new Date();
+        const withdrawalDate = new Date(currentInvestment.fechaDisponibleRetiro);
+        if (today < withdrawalDate) {
+            showNotification('warning', 'Aún no disponible', 'Tu inversión aún no cumple los 7 días.', 4000);
+            return;
+        }
+        
+        // Crear una solicitud de retiro o actualizar estado para que admin la vea
+        await db.collection('inversiones').doc(currentInvestment.id).update({
+            solicitudRetiro: true,
+            fechaSolicitudRetiro: new Date()
+        });
+        
+        showNotification('success', 'Solicitud enviada', 'Tu solicitud de retiro fue enviada al administrador.', 4000);
+        
+        // Opcional: refrescar datos
+        await loadCurrentInvestment();
+        await loadInvestmentHistory();
+        
+    } catch (error) {
+        console.error('Error solicitando retiro:', error);
+        showNotification('error', 'Error', 'No se pudo enviar la solicitud de retiro.', 4000);
+    }
 }
 
 // Cargar historial de inversiones
@@ -1011,3 +1061,4 @@ window.copyNequiNumber = copyNequiNumber;
 window.handleFileUpload = handleFileUpload;
 window.removeFile = removeFile;
 window.processPayment = processPayment; 
+window.requestWithdrawal = requestWithdrawal;
