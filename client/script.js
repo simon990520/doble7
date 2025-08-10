@@ -391,16 +391,29 @@ function updateInvestmentDisplay() {
 
         // Calcular ganancias acumuladas y disponible para retiro
         const today = new Date();
-        const startDate = new Date(currentInvestment.fechaInversion);
-        const endDate = new Date(currentInvestment.fechaDisponibleRetiro);
-        const daysElapsed = Math.max(0, Math.min(7, Math.floor((today - startDate) / (24 * 60 * 60 * 1000))));
-        // 100% en 7 días: ganancia diaria = monto / 7
-        const dailyProfit = currentInvestment.monto / 7;
-        const accumulated = Math.round(dailyProfit * daysElapsed); // ganancias acumuladas hasta hoy
-        const available = today >= endDate ? accumulated : 0; // solo ganancias de inversiones con 7 días
+        const startDate = (currentInvestment.fechaInversion && typeof currentInvestment.fechaInversion.toDate === 'function')
+            ? currentInvestment.fechaInversion.toDate()
+            : new Date(currentInvestment.fechaInversion);
+        const endDate = (currentInvestment.fechaDisponibleRetiro && typeof currentInvestment.fechaDisponibleRetiro.toDate === 'function')
+            ? currentInvestment.fechaDisponibleRetiro.toDate()
+            : new Date(currentInvestment.fechaDisponibleRetiro);
 
-        if (accumulatedEarningsElement) accumulatedEarningsElement.textContent = `$${accumulated.toLocaleString()}`;
-        if (availableWithdrawAmountElement) availableWithdrawAmountElement.textContent = `$${available.toLocaleString()}`;
+        const msPerDay = 24 * 60 * 60 * 1000;
+        const daysElapsedCalc = (startDate instanceof Date && !isNaN(startDate))
+            ? Math.floor((today - startDate) / msPerDay)
+            : 0;
+        const daysElapsed = Math.max(0, Math.min(7, daysElapsedCalc));
+
+        // 100% en 7 días: ganancia diaria = monto / 7
+        const monto = Number(currentInvestment.monto) || 0;
+        const dailyProfit = monto / 7;
+        let accumulated = Math.round(dailyProfit * daysElapsed);
+        if (isNaN(accumulated) || accumulated < 0) accumulated = 0;
+
+        const available = (endDate instanceof Date && !isNaN(endDate) && today >= endDate) ? accumulated : 0; // solo ganancias de inversiones con 7 días
+
+        if (accumulatedEarningsElement) accumulatedEarningsElement.textContent = `$${(accumulated || 0).toLocaleString()}`;
+        if (availableWithdrawAmountElement) availableWithdrawAmountElement.textContent = `$${(available || 0).toLocaleString()}`;
         if (withdrawRequestBtn) withdrawRequestBtn.disabled = available <= 0;
         
         // Verificar si puede retirar
