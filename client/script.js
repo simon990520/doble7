@@ -319,25 +319,56 @@ async function loadCurrentInvestment() {
             console.log('No hay inversión activa');
         }
         
-        // Calcular total de todas las inversiones
-        console.log('Calculando total de todas las inversiones...');
+        // Calcular total de todas las inversiones y métricas de ganancias
+        console.log('Calculando totales y métricas de inversiones...');
         const allInvestmentsQuery = await db.collection('inversiones')
             .where('uid', '==', currentUser.uid)
             .get();
         
         console.log('Total de inversiones encontradas:', allInvestmentsQuery.size);
         
+        const today = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+        
         let totalInvertido = 0;
-        allInvestmentsQuery.forEach(doc => {
-            const investment = doc.data();
-            console.log('Inversión:', investment);
-            totalInvertido += investment.monto;
+        let totalGananciasAcumuladas = 0;
+        let totalDisponibleRetiro = 0;
+        const allInvestments = [];
+        
+        allInvestmentsQuery.forEach(docSnap => {
+            const inv = docSnap.data();
+            inv.id = docSnap.id;
+            allInvestments.push(inv);
+            const monto = Number(inv.monto) || 0;
+            totalInvertido += monto;
+            
+            const fechaInv = inv.fechaInversion && typeof inv.fechaInversion.toDate === 'function'
+                ? inv.fechaInversion.toDate() : new Date(inv.fechaInversion);
+            const fechaRetiro = inv.fechaDisponibleRetiro && typeof inv.fechaDisponibleRetiro.toDate === 'function'
+                ? inv.fechaDisponibleRetiro.toDate() : new Date(inv.fechaDisponibleRetiro);
+            
+            const estado = inv.estado || 'pendiente';
+            // Ganancias acumuladas solo para inversiones activas/pendientes
+            if (estado === 'activa' || estado === 'pendiente') {
+                const daysElapsed = Math.max(0, Math.min(7, Math.floor((today - fechaInv) / msPerDay)));
+                const dailyProfit = monto / 7;
+                totalGananciasAcumuladas += Math.max(0, Math.round(dailyProfit * daysElapsed));
+                if (today >= fechaRetiro) {
+                    // Disponible para retiro = solo ganancias maduras (monto)
+                    totalDisponibleRetiro += monto;
+                }
+            }
         });
         
         console.log('Total invertido calculado:', totalInvertido);
+        console.log('Ganancias acumuladas calculadas:', totalGananciasAcumuladas);
+        console.log('Disponible para retiro calculado:', totalDisponibleRetiro);
         
-        // Guardar el total en una variable global
+        // Guardar en variables globales para el display y acciones
         window.totalInvertido = totalInvertido;
+        window.totalGananciasAcumuladas = totalGananciasAcumuladas;
+        window.totalDisponibleRetiro = totalDisponibleRetiro;
+        window.allInvestments = allInvestments;
         
         console.log('Actualizando display de inversión...');
         updateInvestmentDisplay();
@@ -394,28 +425,9 @@ function updateInvestmentDisplay() {
             console.log('Estado actualizado a Activa');
         }
 
-        // Calcular ganancias acumuladas y disponible para retiro
-        const today = new Date();
-        const startDate = (currentInvestment.fechaInversion && typeof currentInvestment.fechaInversion.toDate === 'function')
-            ? currentInvestment.fechaInversion.toDate()
-            : new Date(currentInvestment.fechaInversion);
-        const endDate = (currentInvestment.fechaDisponibleRetiro && typeof currentInvestment.fechaDisponibleRetiro.toDate === 'function')
-            ? currentInvestment.fechaDisponibleRetiro.toDate()
-            : new Date(currentInvestment.fechaDisponibleRetiro);
-
-        const msPerDay = 24 * 60 * 60 * 1000;
-        const daysElapsedCalc = (startDate instanceof Date && !isNaN(startDate))
-            ? Math.floor((today - startDate) / msPerDay)
-            : 0;
-        const daysElapsed = Math.max(0, Math.min(7, daysElapsedCalc));
-
-        // 100% en 7 días: ganancia diaria = monto / 7
-        const monto = Number(currentInvestment.monto) || 0;
-        const dailyProfit = monto / 7;
-        let accumulated = Math.round(dailyProfit * daysElapsed);
-        if (isNaN(accumulated) || accumulated < 0) accumulated = 0;
-
-        const available = (endDate instanceof Date && !isNaN(endDate) && today >= endDate) ? accumulated : 0; // solo ganancias de inversiones con 7 días
+        // Usar los agregados globales calculados considerando TODAS las inversiones
+        const accumulated = Number(window.totalGananciasAcumuladas) || 0;
+        const available = Number(window.totalDisponibleRetiro) || 0;
 
         if (accumulatedEarningsElement) accumulatedEarningsElement.textContent = `$${(accumulated || 0).toLocaleString()}`;
         if (availableWithdrawAmountElement) availableWithdrawAmountElement.textContent = `$${(available || 0).toLocaleString()}`;
@@ -485,23 +497,24 @@ function canUserWithdraw() {
 // Solicitar retiro al administrador (valida 7 días)
 async function requestWithdrawal() {
     try {
-        if (!currentInvestment) {
-            showNotification('warning', 'Sin inversión', 'No tienes una inversión activa.', 4000);
-            return;
-        }
-        
         const today = new Date();
-        const withdrawalDate = new Date(currentInvestment.fechaDisponibleRetiro);
-        if (today < withdrawalDate) {
-            showNotification('warning', 'Aún no disponible', 'Tu inversión aún no cumple los 7 días.', 4000);
+        // Validar que exista al menos una inversión madura (>= 7 días)
+        const mature = (window.allInvestments || []).filter(inv => {
+            const fechaRetiro = inv.fechaDisponibleRetiro && typeof inv.fechaDisponibleRetiro.toDate === 'function'
+                ? inv.fechaDisponibleRetiro.toDate() : new Date(inv.fechaDisponibleRetiro);
+            return (inv.estado === 'activa' || inv.estado === 'pendiente') && today >= fechaRetiro;
+        });
+
+        if (mature.length === 0) {
+            showNotification('warning', 'Aún no disponible', 'No tienes inversiones con 7 días cumplidos.', 4000);
             return;
         }
-        
-        // Crear una solicitud de retiro o actualizar estado para que admin la vea
-        await db.collection('inversiones').doc(currentInvestment.id).update({
+
+        // Marcar todas las inversiones maduras con solicitud de retiro
+        await Promise.all(mature.map(inv => db.collection('inversiones').doc(inv.id).update({
             solicitudRetiro: true,
             fechaSolicitudRetiro: new Date()
-        });
+        })));
         
         showNotification('success', 'Solicitud enviada', 'Tu solicitud de retiro fue enviada al administrador.', 4000);
         
