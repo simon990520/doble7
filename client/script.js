@@ -15,10 +15,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
+// Firebase Storage puede no estar disponible en todas las páginas (p.ej. login).
+// Evitar error si el SDK de storage no fue cargado en esa página.
+var storage = null;
+if (typeof firebase.storage === 'function') {
+    storage = firebase.storage();
+}
 
-// Variables globales
-let currentUser = null;
+// Variables globales (usar var para evitar problemas de TDZ en algunos navegadores)
+var currentUser = null;
 let userData = null;
 let currentInvestment = null;
 
