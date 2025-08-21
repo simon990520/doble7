@@ -583,17 +583,29 @@ body {
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
 }
 
-.plan-card.plan-seed {
+.plan-card.plan-basic {
     border-color: #4CAF50;
 }
 
-.plan-card.plan-progress {
+.plan-card.plan-initial {
     border-color: #2196F3;
 }
 
-.plan-card.plan-elite {
+.plan-card.plan-progress {
+    border-color: #FF9800;
+}
+
+.plan-card.plan-advanced {
+    border-color: #F44336;
+}
+
+.plan-card.plan-premium {
     border-color: #9C27B0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e3f2fd 100%);
+}
+
+.plan-card.plan-elite {
+    border-color: #FFD700;
+    background: linear-gradient(135deg, #f8f9fa 0%, #fff8e1 100%);
 }
 
 .plan-header {

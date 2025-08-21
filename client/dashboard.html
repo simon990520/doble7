@@ -86,17 +86,17 @@
             <section class="investments-plans">
                 <h2>Planes de Inversión</h2>
                 <div class="plans-grid">
-                    <!-- Plan Semilla -->
-                    <div class="plan-card plan-seed">
+                    <!-- Plan Básico -->
+                    <div class="plan-card plan-basic">
                         <div class="plan-header">
                             <div class="plan-icon">🌱</div>
-                            <h3>Plan Semilla</h3>
+                            <h3>Plan Básico</h3>
                             <div class="plan-badge">Popular</div>
                         </div>
                         <div class="plan-content">
                             <div class="plan-amount">
-                                <span class="amount-label">Inversión mínima</span>
-                                <span class="amount-value">$10.000 COP</span>
+                                <span class="amount-label">Inversión</span>
+                                <span class="amount-value">$30.000 COP</span>
                             </div>
                             <div class="plan-details">
                                 <div class="detail-item">
@@ -109,7 +109,7 @@
                                 </div>
                                 <div class="detail-item">
                                     <i class="fas fa-money-bill-wave"></i>
-                                    <span>Recibes: $20.000 COP</span>
+                                    <span>Recibes: $60.000 COP</span>
                                 </div>
                             </div>
                             <div class="plan-benefits">
@@ -120,27 +120,27 @@
                                 </ul>
                             </div>
                             <div class="plan-description">
-                                <p><strong>Ideal para:</strong> Nuevos inversionistas que quieren probar el sistema con un monto bajo.</p>
+                                <p><strong>Ideal para:</strong> Nuevos inversionistas que quieren probar el sistema con un monto accesible.</p>
                             </div>
                         </div>
                         <div class="plan-footer">
-                            <button class="btn btn-primary plan-btn" onclick="selectPlan('semilla', 10000)">
+                            <button class="btn btn-primary plan-btn" onclick="selectPlan('basico', 30000)">
                                 Seleccionar Plan
                             </button>
                         </div>
                     </div>
 
-                    <!-- Plan Progreso -->
-                    <div class="plan-card plan-progress">
+                    <!-- Plan Inicial -->
+                    <div class="plan-card plan-initial">
                         <div class="plan-header">
                             <div class="plan-icon">🚀</div>
-                            <h3>Plan Progreso</h3>
+                            <h3>Plan Inicial</h3>
                             <div class="plan-badge">Recomendado</div>
                         </div>
                         <div class="plan-content">
                             <div class="plan-amount">
                                 <span class="amount-label">Inversión</span>
-                                <span class="amount-value">$150.000 COP</span>
+                                <span class="amount-value">$50.000 COP</span>
                             </div>
                             <div class="plan-details">
                                 <div class="detail-item">
@@ -153,7 +153,7 @@
                                 </div>
                                 <div class="detail-item">
                                     <i class="fas fa-money-bill-wave"></i>
-                                    <span>$150k → $300k COP</span>
+                                    <span>Recibes: $100.000 COP</span>
                                 </div>
                             </div>
                             <div class="plan-benefits">
@@ -168,7 +168,142 @@
                             </div>
                         </div>
                         <div class="plan-footer">
-                            <button class="btn btn-primary plan-btn" onclick="selectPlan('progreso', 150000)">
+                            <button class="btn btn-primary plan-btn" onclick="selectPlan('inicial', 50000)">
+                                Seleccionar Plan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Plan Progreso -->
+                    <div class="plan-card plan-progress">
+                        <div class="plan-header">
+                            <div class="plan-icon">⚡</div>
+                            <h3>Plan Progreso</h3>
+                            <div class="plan-badge">Destacado</div>
+                        </div>
+                        <div class="plan-content">
+                            <div class="plan-amount">
+                                <span class="amount-label">Inversión</span>
+                                <span class="amount-value">$100.000 COP</span>
+                            </div>
+                            <div class="plan-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Duración: 7 días</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Rentabilidad: 100%</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>Recibes: $200.000 COP</span>
+                                </div>
+                            </div>
+                            <div class="plan-benefits">
+                                <h4>Beneficios adicionales:</h4>
+                                <ul>
+                                    <li>Reporte detallado del movimiento de tu inversión</li>
+                                    <li>Soporte prioritario</li>
+                                    <li>Acceso a promociones especiales</li>
+                                </ul>
+                            </div>
+                            <div class="plan-description">
+                                <p><strong>Ideal para:</strong> Inversionistas que buscan un crecimiento sostenible y confiable.</p>
+                            </div>
+                        </div>
+                        <div class="plan-footer">
+                            <button class="btn btn-primary plan-btn" onclick="selectPlan('progreso', 100000)">
+                                Seleccionar Plan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Plan Avanzado -->
+                    <div class="plan-card plan-advanced">
+                        <div class="plan-header">
+                            <div class="plan-icon">🔥</div>
+                            <h3>Plan Avanzado</h3>
+                            <div class="plan-badge">Premium</div>
+                        </div>
+                        <div class="plan-content">
+                            <div class="plan-amount">
+                                <span class="amount-label">Inversión</span>
+                                <span class="amount-value">$250.000 COP</span>
+                            </div>
+                            <div class="plan-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Duración: 7 días</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Rentabilidad: 100%</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>Recibes: $500.000 COP</span>
+                                </div>
+                            </div>
+                            <div class="plan-benefits">
+                                <h4>Beneficios adicionales:</h4>
+                                <ul>
+                                    <li>Atención personalizada</li>
+                                    <li>Reportes exclusivos de tendencias</li>
+                                    <li>Acceso a promociones VIP</li>
+                                </ul>
+                            </div>
+                            <div class="plan-description">
+                                <p><strong>Ideal para:</strong> Inversionistas experimentados que buscan maximizar sus ganancias.</p>
+                            </div>
+                        </div>
+                        <div class="plan-footer">
+                            <button class="btn btn-primary plan-btn" onclick="selectPlan('avanzado', 250000)">
+                                Seleccionar Plan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Plan Premium -->
+                    <div class="plan-card plan-premium">
+                        <div class="plan-header">
+                            <div class="plan-icon">💎</div>
+                            <h3>Plan Premium</h3>
+                            <div class="plan-badge">Exclusivo</div>
+                        </div>
+                        <div class="plan-content">
+                            <div class="plan-amount">
+                                <span class="amount-label">Inversión</span>
+                                <span class="amount-value">$500.000 COP</span>
+                            </div>
+                            <div class="plan-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Duración: 7 días</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Rentabilidad: 100%</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>Recibes: $1.000.000 COP</span>
+                                </div>
+                            </div>
+                            <div class="plan-benefits">
+                                <h4>Beneficios adicionales:</h4>
+                                <ul>
+                                    <li>Atención personalizada 24/7</li>
+                                    <li>Reportes exclusivos de tendencias de inversión</li>
+                                    <li>Acceso a promociones y reinversiones con beneficios adicionales</li>
+                                </ul>
+                            </div>
+                            <div class="plan-description">
+                                <p><strong>Ideal para:</strong> Inversionistas de alto nivel que buscan resultados excepcionales.</p>
+                            </div>
+                        </div>
+                        <div class="plan-footer">
+                            <button class="btn btn-primary plan-btn" onclick="selectPlan('premium', 500000)">
                                 Seleccionar Plan
                             </button>
                         </div>
@@ -177,9 +312,9 @@
                     <!-- Plan Élite -->
                     <div class="plan-card plan-elite">
                         <div class="plan-header">
-                            <div class="plan-icon">💎</div>
+                            <div class="plan-icon">👑</div>
                             <h3>Plan Élite</h3>
-                            <div class="plan-badge">Premium</div>
+                            <div class="plan-badge">Máximo</div>
                         </div>
                         <div class="plan-content">
                             <div class="plan-amount">
@@ -206,6 +341,7 @@
                                     <li>Atención personalizada 24/7</li>
                                     <li>Reportes exclusivos de tendencias de inversión</li>
                                     <li>Acceso a promociones y reinversiones con beneficios adicionales</li>
+                                    <li>Consultoría personalizada de inversión</li>
                                 </ul>
                             </div>
                             <div class="plan-description">
@@ -262,8 +398,8 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>Monto a invertir</label>
-                    <input type="number" id="investment-amount" value="10000" min="10000" step="1000">
-                    <small id="investment-hint">Mínimo $10.000 COP</small>
+                    <input type="number" id="investment-amount" value="30000" min="30000" step="1000">
+                    <small id="investment-hint">Mínimo $30.000 COP</small>
                 </div>
                 <div class="investment-info">
                     <p><strong>Plan:</strong> <span id="modal-plan-name">-</span></p>

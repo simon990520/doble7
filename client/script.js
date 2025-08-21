@@ -629,22 +629,43 @@ function selectPlan(planType, defaultAmount) {
     let planName, planDescription, minAmount, maxAmount, hint;
     
     switch(planType) {
-        case 'semilla':
-            planName = 'Plan Semilla 🌱';
-            planDescription = 'Inversión mínima: $10.000 COP - Rentabilidad: 100%';
-            minAmount = 10000;
-            maxAmount = 10000;
-            hint = 'Monto fijo: $10.000 COP';
+        case 'basico':
+            planName = 'Plan Básico 🌱';
+            planDescription = 'Inversión: $30.000 COP - Rentabilidad: 100%';
+            minAmount = 30000;
+            maxAmount = 30000;
+            hint = 'Monto fijo: $30.000 COP';
+            break;
+        case 'inicial':
+            planName = 'Plan Inicial 🚀';
+            planDescription = 'Inversión: $50.000 COP - Rentabilidad: 100%';
+            minAmount = 50000;
+            maxAmount = 50000;
+            hint = 'Monto fijo: $50.000 COP';
             break;
         case 'progreso':
-            planName = 'Plan Progreso 🚀';
-            planDescription = 'Inversión: $150.000 COP - Rentabilidad: 100%';
-            minAmount = 150000;
+            planName = 'Plan Progreso ⚡';
+            planDescription = 'Inversión: $100.000 COP - Rentabilidad: 100%';
+            minAmount = 100000;
+            maxAmount = 100000;
+            hint = 'Monto fijo: $100.000 COP';
+            break;
+        case 'avanzado':
+            planName = 'Plan Avanzado 🔥';
+            planDescription = 'Inversión: $250.000 COP - Rentabilidad: 100%';
+            minAmount = 250000;
+            maxAmount = 250000;
+            hint = 'Monto fijo: $250.000 COP';
+            break;
+        case 'premium':
+            planName = 'Plan Premium 💎';
+            planDescription = 'Inversión: $500.000 COP - Rentabilidad: 100%';
+            minAmount = 500000;
             maxAmount = 500000;
-            hint = 'Montos disponibles: $150.000 COP';
+            hint = 'Monto fijo: $500.000 COP';
             break;
         case 'elite':
-            planName = 'Plan Élite 💎';
+            planName = 'Plan Élite 👑';
             planDescription = 'Inversión: $1.000.000 COP - Rentabilidad: 100%';
             minAmount = 1000000;
             maxAmount = 1000000;
@@ -708,16 +729,34 @@ async function confirmInvestment() {
     
     // Determinar el plan basado en el título del modal
     let planType = 'general';
-    if (modalTitle.includes('Semilla')) {
-        planType = 'semilla';
-        if (amount !== 10000) {
-            showNotification('warning', 'Monto incorrecto', 'El Plan Semilla requiere exactamente $10.000', 4000);
+    if (modalTitle.includes('Básico')) {
+        planType = 'basico';
+        if (amount !== 30000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Básico requiere exactamente $30.000', 4000);
+            return;
+        }
+    } else if (modalTitle.includes('Inicial')) {
+        planType = 'inicial';
+        if (amount !== 50000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Inicial requiere exactamente $50.000', 4000);
             return;
         }
     } else if (modalTitle.includes('Progreso')) {
         planType = 'progreso';
-        if (![50000, 150000, 500000].includes(amount)) {
-            showNotification('warning', 'Monto incorrecto', 'El Plan Progreso requiere $50.000, $150.000 o $500.000', 4000);
+        if (amount !== 100000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Progreso requiere exactamente $100.000', 4000);
+            return;
+        }
+    } else if (modalTitle.includes('Avanzado')) {
+        planType = 'avanzado';
+        if (amount !== 250000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Avanzado requiere exactamente $250.000', 4000);
+            return;
+        }
+    } else if (modalTitle.includes('Premium')) {
+        planType = 'premium';
+        if (amount !== 500000) {
+            showNotification('warning', 'Monto incorrecto', 'El Plan Premium requiere exactamente $500.000', 4000);
             return;
         }
     } else if (modalTitle.includes('Élite')) {
@@ -728,8 +767,8 @@ async function confirmInvestment() {
         }
     }
     
-    if (amount < 10000) {
-        showNotification('warning', 'Monto mínimo', 'El monto mínimo es $10.000', 4000);
+    if (amount < 30000) {
+        showNotification('warning', 'Monto mínimo', 'El monto mínimo es $30.000', 4000);
         return;
     }
     
