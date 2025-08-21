@@ -137,7 +137,7 @@ async function processUserLogin() {
                 referidoPor: referralCode || null,
                 miCodigo: generateReferralCode(),
                 referidosActivos: 0,
-                fechaCreacion: new Date()
+                fechaCreacion: await getServerTimestamp()
             };
             
             await db.collection('users').doc(currentUser.uid).set(newUserData);
@@ -484,20 +484,30 @@ function updateInvestmentDisplay() {
 }
 
 // Verificar si el usuario puede retirar
-function canUserWithdraw() {
+async function canUserWithdraw() {
     if (!currentInvestment) return false;
     
-    const today = new Date();
-    const withdrawalDate = new Date(currentInvestment.fechaDisponibleRetiro);
-    const hasEnoughReferrals = userData.referidosActivos >= 3;
-    
-    return today >= withdrawalDate && hasEnoughReferrals;
+    try {
+        const today = await getServerDate();
+        const withdrawalDate = new Date(currentInvestment.fechaDisponibleRetiro);
+        const hasEnoughReferrals = userData.referidosActivos >= 3;
+        
+        return today >= withdrawalDate && hasEnoughReferrals;
+    } catch (error) {
+        console.error('Error obteniendo fecha del servidor para validación:', error);
+        // Fallback a fecha local (menos seguro)
+        const today = new Date();
+        const withdrawalDate = new Date(currentInvestment.fechaDisponibleRetiro);
+        const hasEnoughReferrals = userData.referidosActivos >= 3;
+        
+        return today >= withdrawalDate && hasEnoughReferrals;
+    }
 }
 
 // Solicitar retiro al administrador (valida 7 días)
 async function requestWithdrawal() {
     try {
-        const today = new Date();
+        const today = await getServerDate();
         // Validar que exista al menos una inversión madura (>= 7 días)
         const mature = (window.allInvestments || []).filter(inv => {
             const fechaRetiro = inv.fechaDisponibleRetiro && typeof inv.fechaDisponibleRetiro.toDate === 'function'
@@ -510,10 +520,11 @@ async function requestWithdrawal() {
             return;
         }
 
-        // Marcar todas las inversiones maduras con solicitud de retiro
+        // Marcar todas las inversiones maduras con solicitud de retiro usando fechas del servidor
+        const serverTimestamp = await getServerTimestamp();
         await Promise.all(mature.map(inv => db.collection('inversiones').doc(inv.id).update({
             solicitudRetiro: true,
-            fechaSolicitudRetiro: new Date()
+            fechaSolicitudRetiro: serverTimestamp
         })));
         
         showNotification('success', 'Solicitud enviada', 'Tu solicitud de retiro fue enviada al administrador.', 4000);
@@ -617,7 +628,7 @@ function getStatusText(estado) {
 // ==================== FUNCIONES DE INVERSIÓN ====================
 
 // Seleccionar plan de inversión
-function selectPlan(planType, defaultAmount) {
+async function selectPlan(planType, defaultAmount) {
     const modal = document.getElementById('investment-modal');
     const amountInput = document.getElementById('investment-amount');
     const modalTitle = document.querySelector('#investment-modal .modal-header h3');
@@ -691,12 +702,22 @@ function selectPlan(planType, defaultAmount) {
         amountInput.style.backgroundColor = 'white';
     }
     
-    // Mostrar fechas
-    const today = new Date();
-    const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
-    
-    document.getElementById('modal-investment-date').textContent = formatDate(today);
-    document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    // Mostrar fechas del servidor (seguras)
+    try {
+        const today = await getServerDate();
+        const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('modal-investment-date').textContent = formatDate(today);
+        document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    } catch (error) {
+        console.error('Error obteniendo fechas del servidor:', error);
+        // Fallback a fechas locales (menos seguro)
+        const today = new Date();
+        const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('modal-investment-date').textContent = formatDate(today);
+        document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    }
     
     modal.style.display = 'block';
     
@@ -704,13 +725,24 @@ function selectPlan(planType, defaultAmount) {
 }
 
 // Mostrar modal de inversión
-function showInvestmentModal() {
+async function showInvestmentModal() {
     const modal = document.getElementById('investment-modal');
-    const today = new Date();
-    const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
     
-    document.getElementById('modal-investment-date').textContent = formatDate(today);
-    document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    try {
+        const today = await getServerDate();
+        const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('modal-investment-date').textContent = formatDate(today);
+        document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    } catch (error) {
+        console.error('Error obteniendo fechas del servidor:', error);
+        // Fallback a fechas locales (menos seguro)
+        const today = new Date();
+        const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+        
+        document.getElementById('modal-investment-date').textContent = formatDate(today);
+        document.getElementById('modal-withdrawal-date').textContent = formatDate(withdrawalDate);
+    }
     
     modal.style.display = 'block';
     
@@ -778,13 +810,21 @@ async function confirmInvestment() {
 }
 
 // Mostrar modal de pago
-function showPaymentModal(planType, amount, planName) {
+async function showPaymentModal(planType, amount, planName) {
     const modal = document.getElementById('payment-modal');
     
     // Actualizar detalles del pago
     document.getElementById('payment-plan-name').textContent = planName;
     document.getElementById('payment-amount').textContent = `$${amount.toLocaleString()}`;
-    document.getElementById('payment-date').textContent = formatDate(new Date());
+    
+    // Usar fecha del servidor para el pago
+    try {
+        const serverDate = await getServerDate();
+        document.getElementById('payment-date').textContent = formatDate(serverDate);
+    } catch (error) {
+        console.error('Error obteniendo fecha del servidor para pago:', error);
+        document.getElementById('payment-date').textContent = formatDate(new Date());
+    }
     
     // Guardar datos temporalmente
     window.tempInvestmentData = {
@@ -871,21 +911,21 @@ async function processPayment() {
     try {
         const { planType, amount, planName } = window.tempInvestmentData;
         
-        // Crear la inversión con estado 'pendiente'
-        const today = new Date();
-        const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
+        // Crear la inversión con estado 'pendiente' usando fechas del servidor
+        const serverTimestamp = await getServerTimestamp();
+        const withdrawalTimestamp = await calculateWithdrawalDate();
         
         const investmentData = {
             uid: currentUser.uid,
             monto: amount,
             planTipo: planType,
             planNombre: planName,
-            fechaInversion: today,
-            fechaDisponibleRetiro: withdrawalDate,
+            fechaInversion: serverTimestamp,
+            fechaDisponibleRetiro: withdrawalTimestamp,
             estado: 'pendiente',
-            fechaCreacion: new Date(),
+            fechaCreacion: serverTimestamp,
             comprobanteCargado: true,
-            fechaComprobante: new Date()
+            fechaComprobante: serverTimestamp
         };
         
         // Subir el comprobante a Firebase Storage
@@ -956,9 +996,10 @@ async function withdrawInvestment() {
     
     if (confirmed) {
         try {
+            const serverTimestamp = await getServerTimestamp();
             await db.collection('inversiones').doc(currentInvestment.id).update({
                 estado: 'retirada',
-                fechaRetiro: new Date()
+                fechaRetiro: serverTimestamp
             });
             
             await loadCurrentInvestment();
@@ -987,23 +1028,23 @@ async function reinvestInvestment() {
     
     if (confirmed) {
         try {
-            // Marcar inversión actual como reinvertida
+            // Marcar inversión actual como reinvertida usando fechas del servidor
+            const serverTimestamp = await getServerTimestamp();
+            const withdrawalTimestamp = await calculateWithdrawalDate();
+            
             await db.collection('inversiones').doc(currentInvestment.id).update({
                 estado: 'reinvertida',
-                fechaReinversion: new Date()
+                fechaReinversion: serverTimestamp
             });
             
-            // Crear nueva inversión
-            const today = new Date();
-            const withdrawalDate = new Date(today.getTime() + (7 * 24 * 60 * 60 * 1000));
-            
+            // Crear nueva inversión usando fechas del servidor
             const newInvestmentData = {
                 uid: currentUser.uid,
                 monto: currentInvestment.monto,
-                fechaInversion: today,
-                fechaDisponibleRetiro: withdrawalDate,
+                fechaInversion: serverTimestamp,
+                fechaDisponibleRetiro: withdrawalTimestamp,
                 estado: 'activa',
-                fechaCreacion: new Date()
+                fechaCreacion: serverTimestamp
             };
             
             await db.collection('inversiones').add(newInvestmentData);
@@ -1038,6 +1079,32 @@ function copyReferralCode() {
 }
 
 // ==================== FUNCIONES UTILITARIAS ====================
+
+// Función para obtener la fecha actual del servidor (segura)
+async function getServerTimestamp() {
+    try {
+        // Usar Firebase Timestamp.now() que es generado por el servidor
+        return firebase.firestore.Timestamp.now();
+    } catch (error) {
+        console.error('Error obteniendo timestamp del servidor:', error);
+        // Fallback: usar fecha local pero registrar advertencia
+        console.warn('⚠️ Usando fecha local como fallback - esto puede ser inseguro');
+        return firebase.firestore.Timestamp.fromDate(new Date());
+    }
+}
+
+// Función para obtener fecha del servidor como Date object
+async function getServerDate() {
+    const timestamp = await getServerTimestamp();
+    return timestamp.toDate();
+}
+
+// Función para calcular fecha de retiro usando timestamp del servidor
+async function calculateWithdrawalDate() {
+    const serverDate = await getServerDate();
+    const withdrawalDate = new Date(serverDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+    return firebase.firestore.Timestamp.fromDate(withdrawalDate);
+}
 
 // Formatear fecha
 function formatDate(date) {

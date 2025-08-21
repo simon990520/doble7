@@ -2,8 +2,54 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+    
+    // Reglas para usuarios
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Reglas para inversiones
+    match /inversiones/{investmentId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.uid &&
+        // Validar que la fecha de creación sea del servidor
+        request.resource.data.fechaCreacion == request.time &&
+        // Validar que la fecha de inversión sea del servidor
+        request.resource.data.fechaInversion == request.time &&
+        // Validar que la fecha disponible para retiro sea futura
+        request.resource.data.fechaDisponibleRetiro > request.time;
+      
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.uid &&
+        // Solo permitir actualizaciones específicas
+        (request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['estado', 'fechaRetiro', 'fechaReinversion', 'solicitudRetiro', 'fechaSolicitudRetiro', 'fechaComprobante', 'comprobanteURL', 'comprobanteCargado'])) &&
+        // Validar que las fechas de actualización sean del servidor
+        (request.resource.data.fechaRetiro == null || request.resource.data.fechaRetiro == request.time) &&
+        (request.resource.data.fechaReinversion == null || request.resource.data.fechaReinversion == request.time) &&
+        (request.resource.data.fechaSolicitudRetiro == null || request.resource.data.fechaSolicitudRetiro == request.time) &&
+        (request.resource.data.fechaComprobante == null || request.resource.data.fechaComprobante == request.time);
+    }
+    
+    // Reglas para notificaciones
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.uid;
+    }
+    
+    // Reglas para alertas
+    match /alerts/{alertId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.uid;
+    }
+    
+    // Reglas para administradores (solo lectura por ahora)
+    match /admin/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false; // Los administradores no pueden escribir desde el cliente
     }
   }
 } 

@@ -31,7 +31,7 @@
       telefono: '+57 3000000000',
       referidosActivos: 5, // suficiente para permitir retiros en pruebas
       miCodigo: 'TEST123',
-      fechaCreacion: firebase.firestore.Timestamp.fromDate(new Date())
+      fechaCreacion: firebase.firestore.Timestamp.now()
     };
     if (!snap.exists) {
       await userRef.set(baseUser);
@@ -75,19 +75,19 @@
       fechaInversion: ts(fechaInversion),
       fechaDisponibleRetiro: ts(fechaDisponibleRetiro),
       estado, // 'pendiente' | 'activa' | 'retirada' | 'rechazada' | 'reinvertida'
-      fechaCreacion: ts(new Date())
+      fechaCreacion: firebase.firestore.Timestamp.now()
     };
 
     if (withProof) {
       inv.comprobanteCargado = true;
-      inv.fechaComprobante = ts(new Date());
+      inv.fechaComprobante = firebase.firestore.Timestamp.now();
       inv.comprobanteURL = 'https://via.placeholder.com/600x300.png?text=Comprobante+Prueba';
     }
 
     if (markWithdrawal && estado === 'activa' && fechaDisponibleRetiro <= today) {
       // Marcar como que ya solicitó retiro para probar flujo admin
       inv.solicitudRetiro = true;
-      inv.fechaSolicitudRetiro = ts(new Date());
+      inv.fechaSolicitudRetiro = firebase.firestore.Timestamp.now();
     }
 
     if (estado === 'retirada') {
